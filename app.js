@@ -708,7 +708,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const endPeriod = document.getElementById('period-end').value || 'N/A';
 
     // Construct Subject
-    const subject = `[Timesheet Submission] ${employeeName} - ASC Student Success Center (${startPeriod} to ${endPeriod})`;
+    const subject = `[Timesheet Submission] ${employeeName} - Tutor (${startPeriod} to ${endPeriod})`;
 
     // Calculate totals
     let weekTotals = [0, 0, 0, 0, 0];
@@ -725,7 +725,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Construct Body Text
-    let body = `LIVINGSTONE COLLEGE - STUDENT SUCCESS CENTER\n`;
+    let body = `LIVINGSTONE COLLEGE - TUTOR TIMESHEET\n`;
     body += `MONTHLY TIMESHEET SUBMISSION\n`;
     body += `==============================================\n\n`;
     body += `EMPLOYEE DETAILS:\n`;

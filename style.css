@@ -673,9 +673,19 @@ canvas {
   header {
     padding: 1.25rem !important;
     border-radius: 20px !important;
-    gap: 1rem !important;
+    gap: 1.25rem !important;
     margin-bottom: 1.25rem !important;
     flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  header .flex {
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+    width: 100%;
+    gap: 0.5rem !important;
   }
 
   /* Table Cards Transformation */
@@ -711,7 +721,7 @@ canvas {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
     transition: var(--transition-smooth);
     position: relative;
-    text-align: left !important;
+    text-align: center !important; /* Center row container text */
   }
 
   tr:hover td {
@@ -723,45 +733,47 @@ canvas {
     display: none !important;
   }
 
-  /* Style cells as full-width row fields */
+  /* Style cells as full-width row fields stacked vertically */
   td {
     display: block;
     width: 100% !important;
     border: none !important;
     border-bottom: 1px dashed rgba(226, 232, 240, 0.7) !important;
     padding: 0.75rem 0 !important;
-    text-align: left !important;
+    text-align: center !important; /* Center the cell content flow */
     position: relative;
-    padding-left: 32% !important; /* reserve space for cell labels */
   }
 
   td:last-child {
     border-bottom: none !important;
   }
 
-  /* Inject data-label headers */
+  /* Inject data-label headers centered and stacked */
   td::before {
     content: attr(data-label);
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 28%;
+    display: block !important; /* Force block flow to center above value */
+    position: static !important;
+    transform: none !important;
+    width: 100% !important;
+    margin-bottom: 0.375rem;
     font-family: var(--font-mono);
     font-size: 9px;
     font-weight: 800;
     text-transform: uppercase;
     color: var(--text-medium);
     letter-spacing: 0.05em;
+    text-align: center !important;
   }
 
-  /* Specific formatting for input cells inside cards */
+  /* Specific formatting for input cells inside cards centered */
   .table-input {
     width: 100% !important;
-    max-width: 180px;
-    text-align: left !important;
+    max-width: 220px !important;
+    margin: 0 auto !important;
+    text-align: center !important;
     font-size: 13px !important;
-    padding: 6px 10px !important;
+    padding: 8px 12px !important;
+    display: block !important;
   }
 
   /* Date selector adjustments */
@@ -769,14 +781,16 @@ canvas {
     border-bottom: 2px solid var(--color-border) !important;
     padding-bottom: 0.75rem !important;
     margin-bottom: 0.5rem;
-    padding-left: 0 !important; /* Full width date row */
+    padding-left: 0 !important;
+    text-align: center !important;
   }
 
   td[data-label="Date"] .flex {
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     width: 100%;
+    gap: 0.5rem !important;
   }
 
   td[data-label="Date"]::before {
@@ -784,23 +798,27 @@ canvas {
   }
 
   td[data-label="Date"] input[type="date"] {
-    width: auto !important;
-    max-width: 150px;
+    width: 100% !important;
+    max-width: 220px !important;
+    margin: 0 auto !important;
   }
 
   /* Center alignment for hours */
   td[data-label="Daily Hours"] {
-    font-size: 14px;
+    font-size: 15px;
     color: var(--color-navy);
+    font-weight: 800;
+    text-align: center !important;
   }
 
   /* Student Sessions alignment inside mobile cards */
   td[data-label="Student Sessions"],
   td[data-label="Skills Cover"],
   td[data-label="Notes Log"] {
-    padding-left: 0 !important; /* use full width for structured student inputs */
+    padding-left: 0 !important;
     padding-top: 1rem !important;
     padding-bottom: 1rem !important;
+    text-align: center !important;
   }
 
   td[data-label="Student Sessions"]::before,
@@ -812,15 +830,19 @@ canvas {
     margin-bottom: 0.5rem;
     font-size: 9px;
     color: var(--color-navy);
+    text-align: center !important;
   }
 
   .btn-add-session-inline {
     width: 100%;
+    max-width: 220px;
+    margin: 0 auto;
     justify-content: center;
     border: 1px dashed var(--color-blue-vibrant);
     background-color: var(--color-blue-accent-light);
     border-radius: 8px;
     padding: 8px !important;
+    display: inline-flex;
   }
 
   /* Swipe Carousel for Weekly Cards on Mobile */
