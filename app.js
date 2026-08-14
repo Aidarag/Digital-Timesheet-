@@ -252,7 +252,7 @@ function renderDailyRows() {
     
     // Date & Day column
     let dateCol = `
-      <td class="py-3 px-3 border-r border-slate-200">
+      <td class="py-3 px-3 border-r border-slate-200" data-label="Date">
         <div class="flex flex-col gap-1 items-start">
           <span class="font-display font-black text-xs text-slate-800">${day.dayName}</span>
           <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="table-input py-1 text-[11px]" value="${day.date || ''}">
@@ -262,15 +262,15 @@ function renderDailyRows() {
     
     // Shift Inputs columns
     let shiftsCols = `
-      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
-      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
-      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
-      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
+      <td class="p-2 border-r border-slate-200" data-label="Shift 1 In"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
+      <td class="p-2 border-r border-slate-200" data-label="Shift 1 Out"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
+      <td class="p-2 border-r border-slate-200" data-label="Shift 2 In"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
+      <td class="p-2 border-r border-slate-200" data-label="Shift 2 Out"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
     `;
     
     // Daily calculated hours column
     let dailyHrsCol = `
-      <td class="p-2 border-r border-slate-200">
+      <td class="p-2 border-r border-slate-200" data-label="Daily Hours">
         <span class="font-mono text-xs font-bold text-slate-800" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
       </td>
     `;
@@ -279,7 +279,7 @@ function renderDailyRows() {
     let weeklyTotalCol = '';
     if (dIdx === 0) {
       weeklyTotalCol = `
-        <td class="weekly-total-cell" rowspan="7" id="weekly-total-span-cell">
+        <td class="weekly-total-cell" rowspan="7" id="weekly-total-span-cell" data-label="Weekly Total">
           <span id="weekly-total-value-span">${weekTotal.toFixed(1)}</span>
         </td>
       `;
@@ -288,18 +288,18 @@ function renderDailyRows() {
     // Tutoring Cells
     let tutoringCols = `
       <!-- Student Name ID column -->
-      <td class="py-3 px-3 border-r border-slate-200 text-left">
+      <td class="py-3 px-3 border-r border-slate-200 text-left" data-label="Student Sessions">
         <div class="cell-sessions-container" id="cell-student-${currentWeekIndex}-${dIdx}"></div>
         <button type="button" class="btn-add-session-inline" id="btn-add-session-${currentWeekIndex}-${dIdx}">
           <i data-lucide="plus-circle" class="h-3 w-3"></i> Add Student Session
         </button>
       </td>
       <!-- Skills Worked On column -->
-      <td class="py-3 px-3 border-r border-slate-200">
+      <td class="py-3 px-3 border-r border-slate-200" data-label="Skills Cover">
         <div class="cell-sessions-container" id="cell-skills-${currentWeekIndex}-${dIdx}"></div>
       </td>
       <!-- Progress Notes column -->
-      <td class="py-3 px-3">
+      <td class="py-3 px-3" data-label="Notes Log">
         <div class="cell-sessions-container" id="cell-notes-${currentWeekIndex}-${dIdx}"></div>
       </td>
     `;
