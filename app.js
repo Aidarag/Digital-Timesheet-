@@ -114,34 +114,27 @@ function recalculateTotals() {
     
     periodTotal += weekTotal;
     
-    // Update summary tab value
+    // Update summary tab badge
     const tabEl = document.getElementById(`tab-week-${wIdx}`);
     if (tabEl) {
-      tabEl.querySelector('.tab-hours-badge').innerText = `${weekTotal.toFixed(1)}h`;
-    }
-    
-    // Update summary list cards
-    const summaryVal = document.getElementById(`summary-val-${wIdx}`);
-    if (summaryVal) {
-      summaryVal.innerText = `${weekTotal.toFixed(1)} Hours`;
+      const badge = tabEl.querySelector('.tab-hours-badge');
+      if (badge) badge.innerText = `${weekTotal.toFixed(1)}h`;
     }
 
-    // Update table active week vertical rowspan display if rendering this week
+    // Update week footer total if this is the active week
     if (currentWeekIndex === wIdx) {
-      const vertWeeklyTotalCell = document.getElementById('weekly-total-value-span');
-      if (vertWeeklyTotalCell) {
-        vertWeeklyTotalCell.innerText = weekTotal.toFixed(1);
-      }
-      // Also update week footer total card
       const weekFooterVal = document.getElementById('week-total-value');
       if (weekFooterVal) {
-        weekFooterVal.innerText = weekTotal.toFixed(1);
+        weekFooterVal.innerText = `${weekTotal.toFixed(1)} Hours`;
       }
     }
   });
   
   // Update final period hours
-  document.getElementById('summary-total-hours').innerText = `${periodTotal.toFixed(1)} Hours`;
+  const totalEl = document.getElementById('summary-total-hours');
+  if (totalEl) {
+    totalEl.innerHTML = `${periodTotal.toFixed(1)} <span style="font-size: 0.875rem; font-weight: 700; color: var(--text-medium);">Hours</span>`;
+  }
 }
 
 // Date helper: autofill date inputs based on Period Start Date
@@ -196,9 +189,9 @@ function updateReportingPeriodDisplay() {
       const [y, m, d] = dateStr.split('-');
       return `${m}/${d}/${y}`;
     };
-    display.value = `${formatDate(start)} - ${formatDate(end)}`;
+    display.textContent = `${formatDate(start)} – ${formatDate(end)}`;
   } else {
-    display.value = 'MM/DD/YYYY - MM/DD/YYYY';
+    display.textContent = 'MM/DD/YYYY';
   }
 }
 
@@ -218,7 +211,7 @@ function renderWeekTabs() {
     tabButton.type = 'button';
     tabButton.id = `tab-week-${wIdx}`;
     tabButton.className = `tab-week cursor-pointer ${currentWeekIndex === wIdx ? 'active' : ''}`;
-    tabButton.innerHTML = `Week ${wIdx + 1} <span class="tab-hours-badge ml-1 text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-[#002060] border border-blue-500/20">${weekTotal.toFixed(1)}h</span>`;
+    tabButton.innerHTML = `Week ${wIdx + 1} <span class="tab-hours-badge">${weekTotal.toFixed(1)}h</span>`;
     
     tabButton.addEventListener('click', () => {
       currentWeekIndex = wIdx;
@@ -226,10 +219,10 @@ function renderWeekTabs() {
       tabButton.classList.add('active');
       
       const label = document.getElementById('week-total-label');
-      if (label) label.innerText = `WEEK ${wIdx + 1} TOTAL`;
+      if (label) label.innerText = `Week ${wIdx + 1} Total`;
       
       renderDailyRows();
-      updateWeekStartDateField();
+      recalculateTotals();
     });
     
     container.appendChild(tabButton);
@@ -242,75 +235,66 @@ function renderDailyRows() {
   
   const activeWeekDays = timesheetState.weeks[currentWeekIndex];
   
-  // Calculate current week total for rowspan cell
-  let weekTotal = 0;
-  activeWeekDays.forEach(d => weekTotal += d.hours);
-  
   activeWeekDays.forEach((day, dIdx) => {
     const tr = document.createElement('tr');
-    tr.className = 'text-center';
     
-    // Date & Day column
+    // 1. Date column
     let dateCol = `
-      <td class="py-3 px-3 border-r border-slate-200" data-label="Date">
+      <td data-label="Date" style="padding: 8px;">
         <div class="flex flex-col gap-1 items-start">
-          <span class="font-display font-black text-xs text-slate-800">${day.dayName}</span>
-          <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="table-input py-1 text-[11px]" value="${day.date || ''}">
+          <span style="font-family: var(--font-display); font-weight: 800; font-size: 11px; color: var(--text-dark);">${day.dayName}</span>
+          <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="table-input" style="padding: 6px 8px; font-size: 11px;" value="${day.date || ''}">
         </div>
       </td>
     `;
     
-    // Shift Inputs columns
-    let shiftsCols = `
-      <td class="p-2 border-r border-slate-200" data-label="Shift 1 In"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
-      <td class="p-2 border-r border-slate-200" data-label="Shift 1 Out"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
-      <td class="p-2 border-r border-slate-200" data-label="Shift 2 In"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
-      <td class="p-2 border-r border-slate-200" data-label="Shift 2 Out"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
-    `;
-    
-    // Daily calculated hours column
-    let dailyHrsCol = `
-      <td class="p-2 border-r border-slate-200" data-label="Daily Hours">
-        <span class="font-mono text-xs font-bold text-slate-800" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
-      </td>
-    `;
-    
-    // Vertically merged Weekly Total column (only rendered on Monday dIdx === 0)
-    let weeklyTotalCol = '';
-    if (dIdx === 0) {
-      weeklyTotalCol = `
-        <td class="weekly-total-cell" rowspan="7" id="weekly-total-span-cell" data-label="Weekly Total">
-          <span id="weekly-total-value-span">${weekTotal.toFixed(1)}</span>
-        </td>
-      `;
-    }
-    
-    // Tutoring Cells
-    let tutoringCols = `
-      <!-- Student Name ID column -->
-      <td class="py-3 px-3 border-r border-slate-200 text-left" data-label="Student Sessions">
+    // 2. Student Name / ID column
+    let studentCol = `
+      <td data-label="Student Sessions" style="padding: 8px; text-align: left;">
         <div class="cell-sessions-container" id="cell-student-${currentWeekIndex}-${dIdx}"></div>
         <button type="button" class="btn-add-session-inline" id="btn-add-session-${currentWeekIndex}-${dIdx}">
-          <i data-lucide="plus-circle" class="h-3 w-3"></i> Add Student Session
+          <i data-lucide="plus-circle" style="width: 0.75rem; height: 0.75rem;"></i> Add
         </button>
       </td>
-      <!-- Skills Worked On column -->
-      <td class="py-3 px-3 border-r border-slate-200" data-label="Skills Cover">
+    `;
+    
+    // 3. Skills column
+    let skillsCol = `
+      <td data-label="Skills" style="padding: 8px;">
         <div class="cell-sessions-container" id="cell-skills-${currentWeekIndex}-${dIdx}"></div>
       </td>
-      <!-- Progress Notes column -->
-      <td class="py-3 px-3" data-label="Notes Log">
+    `;
+    
+    // 4–5. Time In / Out (1st shift)
+    let shift1Cols = `
+      <td data-label="In" style="padding: 8px;"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
+      <td data-label="Out" style="padding: 8px;"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
+    `;
+    
+    // 6–7. Time In / Out (2nd shift)
+    let shift2Cols = `
+      <td data-label="In (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
+      <td data-label="Out (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
+    `;
+    
+    // 8. Total Daily Hours
+    let hoursCol = `
+      <td data-label="Total Hours" style="padding: 8px; text-align: center;">
+        <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: var(--text-dark);" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
+      </td>
+    `;
+    
+    // 9. Progress Notes
+    let notesCol = `
+      <td data-label="Notes" style="padding: 8px;">
         <div class="cell-sessions-container" id="cell-notes-${currentWeekIndex}-${dIdx}"></div>
       </td>
     `;
     
-    tr.innerHTML = dateCol + shiftsCols + dailyHrsCol + weeklyTotalCol + tutoringCols;
+    tr.innerHTML = dateCol + studentCol + skillsCol + shift1Cols + shift2Cols + hoursCol + notesCol;
     tbody.appendChild(tr);
     
-    // Render tutoring session lists inside cell containers
     renderCellSessions(currentWeekIndex, dIdx);
-    
-    // Attach event listeners for row inputs
     setupRowEvents(currentWeekIndex, dIdx);
   });
   
@@ -638,8 +622,8 @@ document.addEventListener('DOMContentLoaded', () => {
       splash.classList.add('fade-out-splash');
       setTimeout(() => {
         splash.remove();
-      }, 500); // matches the transition-all duration-500 setting
-    }, 1800); // 1.8 seconds loading screen delay
+      }, 500);
+    }, 1800);
   }
 
   initDefaultWeeks();
@@ -656,35 +640,6 @@ document.addEventListener('DOMContentLoaded', () => {
     updateReportingPeriodDisplay();
   });
 
-  // Week Start Date input field changed
-  const weekStartInput = document.getElementById('week-start-date');
-  if (weekStartInput) {
-    weekStartInput.addEventListener('change', (e) => {
-      const startVal = e.target.value;
-      if (!startVal) return;
-      
-      const baseDate = new Date(startVal + 'T00:00:00');
-      const activeWeek = timesheetState.weeks[currentWeekIndex];
-      
-      activeWeek.forEach((day, dIdx) => {
-        const currentDayDate = new Date(baseDate);
-        currentDayDate.setDate(baseDate.getDate() + dIdx);
-        
-        const yyyy = currentDayDate.getFullYear();
-        const mm = String(currentDayDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(currentDayDate.getDate()).padStart(2, '0');
-        
-        day.date = `${yyyy}-${mm}-${dd}`;
-        
-        // Update input
-        const dateInput = document.getElementById(`date-input-${currentWeekIndex}-${dIdx}`);
-        if (dateInput) {
-          dateInput.value = day.date;
-        }
-      });
-    });
-  }
-
   // Add Week tab click
   document.getElementById('btn-add-week').addEventListener('click', () => {
     timesheetState.weeks.push(createEmptyWeek());
@@ -692,12 +647,28 @@ document.addEventListener('DOMContentLoaded', () => {
     recalculateTotals();
   });
 
+  // Global "Add Student Session" buttons — add a session to the first day of the active week
+  const addSessionGlobal = document.getElementById('btn-add-session-global');
+  const addSessionTable = document.getElementById('btn-add-session-table');
+  const addSessionHandler = () => {
+    const day = timesheetState.weeks[currentWeekIndex][0];
+    day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
+    renderCellSessions(currentWeekIndex, 0);
+  };
+  if (addSessionGlobal) addSessionGlobal.addEventListener('click', addSessionHandler);
+  if (addSessionTable) addSessionTable.addEventListener('click', addSessionHandler);
+
+  // Footer Download PDF button
+  const pdfFooterBtn = document.getElementById('btn-download-pdf-footer');
+  if (pdfFooterBtn) {
+    pdfFooterBtn.addEventListener('click', () => {
+      generateTimesheetPDF();
+    });
+  }
+
   // Draft triggers
   document.getElementById('btn-save-draft').addEventListener('click', () => {
     saveDraft();
-  });
-  document.getElementById('btn-load-draft').addEventListener('click', () => {
-    loadDraft();
   });
 
   // Helper to format and open Outlook mailto compose draft

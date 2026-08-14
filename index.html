@@ -3,30 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Success Center Monthly Timesheet | Livingstone College</title>
-  <!-- Google Fonts: Outfit (Display), Inter (Body), JetBrains Mono (Numbers), Caveat (Script) -->
+  <title>Success Center Digital Timesheet | Livingstone College</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <!-- Lucide Icons via CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
-  <!-- Main Redesigned Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="bg-gray-50 text-slate-800 min-h-screen relative overflow-x-hidden pb-16 font-sans">
+<body>
 
-  <!-- 00 — SPLASH SCREEN OVERLAY -->
+  <!-- 00 — SPLASH SCREEN -->
   <div id="splash-screen">
-    <!-- Top Pill -->
     <div style="border-radius: 9999px; border: 1px solid rgba(148, 163, 184, 0.4); padding: 4px 20px; font-size: 12px; font-style: italic; font-family: Georgia, serif; color: #475569;">
       Success Center
     </div>
-    <!-- Title Heading -->
     <div style="text-align: center; margin-top: 10px;">
-      <h1 class="font-display text-4xl sm:text-5xl font-black tracking-widest text-[#002060] uppercase leading-none" style="letter-spacing: 0.1em; font-size: 2.5rem; font-weight: 900; color: #002060;">TIME TO</h1>
+      <h1 class="font-display" style="letter-spacing: 0.1em; font-size: 2.5rem; font-weight: 900; color: #002060; font-family: var(--font-display);">TIME TO</h1>
       <div class="text-script-blue font-handwritten">Clock It</div>
     </div>
-    <!-- Rotating Clock Loader -->
     <div class="splash-loader-container">
       <div class="splash-loader-ring"></div>
       <div class="splash-loader-clock">
@@ -34,320 +28,272 @@
         <div class="clock-hand-minute"></div>
       </div>
     </div>
-    <!-- Subtitle status -->
     <div style="color: #94a3b8; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;">
       Preparing your timesheet...
     </div>
-    <!-- Bottom Slogan -->
     <div class="splash-slogan">
       No paper. No stress. No problem.
     </div>
   </div>
-  
-  <div class="max-w-7xl mx-auto px-4 py-8">
-    
-    <!-- 01 — INSTITUTIONAL BRAND HEADER -->
-    <header class="flex flex-col lg:flex-row items-center justify-between gap-6 mb-8 bg-white border border-slate-200/80 p-6 rounded-3xl shadow-sm">
-      <!-- Left: Logo & College Info -->
-      <div class="flex items-center gap-4 text-center lg:text-left">
-        <!-- Official Livingstone College Seal Logo -->
-        <div class="w-16 h-16 shrink-0">
-          <img src="livingstone_seal.png" alt="Livingstone College Logo" class="w-full h-full object-contain">
-        </div>
-        <div>
-          <h1 class="font-display text-2xl font-black text-[#002060] tracking-tight uppercase leading-none">LIVINGSTONE COLLEGE</h1>
-          <span class="font-mono text-xs font-bold uppercase tracking-wider text-blue-600 block mt-1">SUCCESS CENTER</span>
-        </div>
-      </div>
 
-      <!-- Middle: Monthly Timesheet Header -->
-      <div class="text-center">
-        <h2 class="font-display text-2xl sm:text-3xl font-black text-[#002060] tracking-tight flex items-center justify-center gap-2">
-          <span class="text-blue-500">✦</span> MONTHLY TIMESHEET <span class="text-blue-500">✦</span>
-        </h2>
-        <span class="text-xs font-mono font-bold text-gray-500 uppercase tracking-widest block mt-0.5">Tutor</span>
+  <!-- 01 — TOP NAVIGATION BAR -->
+  <nav class="top-nav">
+    <div class="nav-brand">
+      <div class="nav-icon">
+        <i data-lucide="clock" style="width: 1.25rem; height: 1.25rem;"></i>
       </div>
-
-      <!-- Right: Reporting Period Date Range -->
-      <div class="bg-slate-50 border border-slate-200/80 px-5 py-3 rounded-2xl flex flex-col items-center sm:items-start gap-1">
-        <label for="reporting-period" class="label-mono text-[10px] text-gray-500 flex items-center gap-1">
-          <i data-lucide="calendar" class="h-3.5 w-3.5 text-blue-600"></i> Reporting Period
-        </label>
-        <div class="flex items-center gap-2 font-mono text-xs font-bold text-slate-700">
-          <input type="text" id="reporting-period-display" readonly placeholder="MM/DD/YYYY - MM/DD/YYYY" class="bg-transparent border-none p-0 text-center w-48 focus:outline-none cursor-default">
-        </div>
+      <div class="nav-brand-text">
+        <h1>Success Center</h1>
+        <span>Digital Timesheet</span>
       </div>
-    </header>
+    </div>
+    <div class="nav-right">
+      <div class="nav-badge">
+        <i data-lucide="calendar" style="width: 0.85rem; height: 0.85rem;"></i>
+        <span id="reporting-period-display">MM/DD/YYYY</span>
+      </div>
+      <div class="nav-avatar" id="user-avatar">A</div>
+    </div>
+  </nav>
 
-    <!-- 02 — EMPLOYEE METADATA GRID -->
+  <!-- MAIN CONTENT -->
+  <div class="app-container">
+
+    <!-- 02 — HERO TITLE -->
+    <div class="hero-title">
+      <h2>Monthly <span>Timesheet</span></h2>
+      <p>Track and record your working hours and sessions.</p>
+    </div>
+
     <form id="timesheet-form">
-      <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        
-        <!-- Employee Name Card -->
-        <div class="meta-card flex items-center gap-4 bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-sm">
-          <div class="p-3 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <i data-lucide="user" class="h-5 w-5"></i>
+
+      <!-- 03 — EMPLOYEE INFO + REPORTING PERIOD (Two Glass Cards) -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom: 1.5rem;">
+
+        <!-- Employee Information Card -->
+        <div class="glass-card" style="padding: 1.5rem;">
+          <div class="section-label">
+            <i data-lucide="user"></i> Employee Information
           </div>
-          <div class="flex-grow space-y-1">
-            <label for="emp-name" class="label-mono text-[9px] text-gray-500">Employee Name</label>
-            <input type="text" id="emp-name" required placeholder="Enter employee name..." class="input-flat">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Employee Name</label>
+              <input type="text" id="emp-name" required placeholder="Enter employee name..." class="input-flat">
+            </div>
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Employee ID</label>
+              <input type="text" id="emp-id" placeholder="LC-XXXX" class="input-flat">
+            </div>
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Position</label>
+              <select id="emp-position" class="input-flat">
+                <option value="">Select position...</option>
+                <option value="Tutor">Tutor</option>
+                <option value="Senior Tutor">Senior Tutor</option>
+                <option value="Lab Assistant">Lab Assistant</option>
+                <option value="Mentor">Mentor</option>
+              </select>
+            </div>
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Department</label>
+              <select id="emp-dept" class="input-flat">
+                <option value="Academic Support Center">Academic Support Center</option>
+                <option value="Student Affairs">Student Affairs</option>
+                <option value="Library Services">Library Services</option>
+              </select>
+            </div>
           </div>
         </div>
 
-        <!-- Department Name Card -->
-        <div class="meta-card flex items-center gap-4 bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-sm">
-          <div class="p-3 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <i data-lucide="building" class="h-5 w-5"></i>
+        <!-- Reporting Period Card -->
+        <div class="glass-card" style="padding: 1.5rem;">
+          <div class="section-label">
+            <i data-lucide="calendar-range"></i> Reporting Period
           </div>
-          <div class="flex-grow space-y-1">
-            <label for="emp-dept" class="label-mono text-[9px] text-gray-500">Department Name</label>
-            <input type="text" id="emp-dept" readonly value="Academic Support Center" class="input-flat text-gray-400 bg-transparent border-none cursor-not-allowed">
-          </div>
-        </div>
-
-        <!-- Beginning Date Card -->
-        <div class="meta-card flex items-center gap-4 bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-sm">
-          <div class="p-3 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <i data-lucide="calendar" class="h-5 w-5"></i>
-          </div>
-          <div class="flex-grow space-y-1">
-            <label for="period-start" class="label-mono text-[9px] text-gray-500">Beginning Date</label>
-            <input type="date" id="period-start" required class="input-flat">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Start Date</label>
+              <input type="date" id="period-start" required class="input-flat">
+            </div>
+            <div>
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">End Date</label>
+              <input type="date" id="period-end" required class="input-flat">
+            </div>
           </div>
         </div>
+      </div>
 
-        <!-- Ending Date Card -->
-        <div class="meta-card flex items-center gap-4 bg-white border border-slate-200/80 p-4.5 rounded-2xl shadow-sm">
-          <div class="p-3 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-            <i data-lucide="calendar" class="h-5 w-5"></i>
-          </div>
-          <div class="flex-grow space-y-1">
-            <label for="period-end" class="label-mono text-[9px] text-gray-500">Ending Date</label>
-            <input type="date" id="period-end" required class="input-flat">
-          </div>
-        </div>
+      <!-- 04 — MAIN SPREADSHEET CARD -->
+      <div class="glass-card table-card" style="margin-bottom: 1.5rem;">
 
-      </section>
-
-      <!-- 03 — MAIN SPREADSHEET CARD -->
-      <section class="bg-white border border-slate-200/80 rounded-3xl shadow-sm overflow-hidden mb-8">
-        
         <!-- Tab Header Controls -->
-        <div class="bg-slate-50 border-b border-slate-200/80 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
-          <div class="flex items-center gap-3">
-            <div id="week-tabs-container" class="flex gap-2">
-              <!-- Dynamically populated Week Tabs -->
-            </div>
+        <div class="tab-header">
+          <div class="flex items-center gap-2 flex-wrap">
+            <div id="week-tabs-container" class="flex gap-2 flex-wrap"></div>
           </div>
-          <div class="flex items-center gap-3">
-            <div class="flex items-center gap-2 text-xs font-mono font-bold text-slate-500">
-              <span>Week Start Date:</span>
-              <input type="date" id="week-start-date" class="input-flat py-1 px-2.5 bg-white border border-slate-200 rounded-lg text-slate-700 w-36">
-            </div>
-            <button type="button" id="btn-add-week" class="btn-secondary py-1.5 px-3.5 text-[10px] flex items-center gap-1">
-              <i data-lucide="plus" class="h-3.5 w-3.5"></i> Add Week
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-add-week" class="btn-secondary" style="padding: 6px 14px; font-size: 10px;">
+              <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Week
+            </button>
+            <button type="button" id="btn-add-session-global" class="btn-primary" style="padding: 6px 14px; font-size: 10px;">
+              <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Student Session
             </button>
           </div>
         </div>
 
         <!-- Spreadsheet Grid Container -->
-        <div class="overflow-x-auto">
-          <table class="w-full border-collapse" id="timesheet-table">
+        <div style="overflow-x: auto;">
+          <table id="timesheet-table">
             <thead>
-              <tr class="bg-gradient-to-r from-[#002060] to-[#0e3c92] text-white text-[10px] font-mono uppercase tracking-wider text-center">
-                <th class="py-4 px-3 border-r border-white/10 font-black rounded-tl-3xl w-28">Date</th>
-                <th class="py-4 px-2 border-r border-white/10 w-20">In</th>
-                <th class="py-4 px-2 border-r border-white/10 w-20">Out</th>
-                <th class="py-4 px-2 border-r border-white/10 w-20">In</th>
-                <th class="py-4 px-2 border-r border-white/10 w-20">Out</th>
-                <th class="py-4 px-2 border-r border-white/10 w-28">Total Daily Hours</th>
-                <th class="py-4 px-2 border-r border-white/10 w-28">Weekly Total</th>
-                <th class="py-4 px-3 border-r border-white/10 w-64">Student Name / ID</th>
-                <th class="py-4 px-3 border-r border-white/10 w-64">Skills / Assignment(s) Worked On</th>
-                <th class="py-4 px-3 rounded-tr-3xl w-72">Progress Notes</th>
+              <tr>
+                <th style="width: 120px; border-radius: 0;">Date</th>
+                <th style="width: 180px;">Student Name / ID</th>
+                <th style="width: 180px;">Skills / Assignment(s)</th>
+                <th colspan="2" style="text-align: center;">Time In / Out</th>
+                <th colspan="2" style="text-align: center;">In (2nd) / Out (2nd)</th>
+                <th style="width: 100px;">Total Daily Hours</th>
+                <th style="width: 180px; border-radius: 0;">Progress Notes</th>
               </tr>
             </thead>
             <tbody id="table-rows-body">
-              <!-- Dynamically populated 7 days rows (Monday to Sunday) -->
+              <!-- Dynamically populated -->
             </tbody>
           </table>
         </div>
 
-        <!-- Weekly Summary Footer Row -->
-        <div class="bg-slate-50 border-t border-slate-200/80 px-6 py-4 flex items-center justify-between">
-          <button type="button" id="btn-load-draft" class="btn-secondary text-[11px] py-2 px-4 flex items-center gap-1">
-            <i data-lucide="folder-open" class="h-4 w-4"></i> Load Saved Draft
+        <!-- Add Student Session Link -->
+        <div style="text-align: center; padding: 0.75rem;">
+          <button type="button" id="btn-add-session-table" class="btn-add-session-inline" style="font-size: 11px; padding: 6px 16px;">
+            <i data-lucide="plus-circle" style="width: 0.85rem; height: 0.85rem;"></i> Add Student Session
           </button>
-          <div class="flex items-center gap-3">
-            <span class="font-display font-black text-slate-800 uppercase text-xs tracking-wider" id="week-total-label">WEEK 1 TOTAL</span>
-            <div class="bg-blue-50 border border-blue-200/80 text-[#002060] font-mono font-black px-6 py-2 rounded-xl text-center min-w-[100px]" id="week-total-value">
-              0.0
-            </div>
-          </div>
         </div>
-      </section>
 
-      <!-- 04 — BOTTOM SUMMARY & TELEMETRY ROW -->
-      <section class="grid grid-cols-1 md:grid-cols-12 gap-4 mb-8">
-        
-        <!-- Weeks 1 to 5 Total Cards -->
-        <div class="md:col-span-9 grid grid-cols-2 sm:grid-cols-5 gap-3 weeks-summary-scroll">
-          <!-- Dynamically populated Week Cards -->
-          <div class="summary-card bg-white border border-slate-200 p-4.5 rounded-2xl flex flex-col justify-between" id="summary-card-0">
-            <span class="label-mono text-[9px]">Week 1 Total</span>
-            <span class="text-lg font-black text-slate-800 mt-2 font-mono" id="summary-val-0">0.0 Hours</span>
+        <!-- Weekly Total Footer -->
+        <div class="week-footer">
+          <span style="font-family: var(--font-display); font-weight: 800; font-size: 0.8rem; color: var(--text-medium); text-transform: uppercase; letter-spacing: 0.05em;" id="week-total-label">Weekly Total</span>
+          <span style="font-family: var(--font-mono); font-weight: 800; font-size: 1rem; color: var(--color-blue-vibrant);" id="week-total-value">0.0 Hours</span>
+        </div>
+      </div>
+
+      <!-- 05 — BOTTOM ROW: Total Hours + 3 Signatures -->
+      <div class="bottom-row" style="margin-bottom: 1.5rem;">
+
+        <!-- Total Hours Card -->
+        <div class="total-hours-card glass-card">
+          <div class="total-hours-icon">
+            <i data-lucide="trending-up" style="width: 1.25rem; height: 1.25rem;"></i>
           </div>
-          <div class="summary-card bg-white border border-slate-200 p-4.5 rounded-2xl flex flex-col justify-between" id="summary-card-1">
-            <span class="label-mono text-[9px]">Week 2 Total</span>
-            <span class="text-lg font-black text-slate-800 mt-2 font-mono" id="summary-val-1">0.0 Hours</span>
-          </div>
-          <div class="summary-card bg-white border border-slate-200 p-4.5 rounded-2xl flex flex-col justify-between" id="summary-card-2">
-            <span class="label-mono text-[9px]">Week 3 Total</span>
-            <span class="text-lg font-black text-slate-800 mt-2 font-mono" id="summary-val-2">0.0 Hours</span>
-          </div>
-          <div class="summary-card bg-white border border-slate-200 p-4.5 rounded-2xl flex flex-col justify-between" id="summary-card-3">
-            <span class="label-mono text-[9px]">Week 4 Total</span>
-            <span class="text-lg font-black text-slate-800 mt-2 font-mono" id="summary-val-3">0.0 Hours</span>
-          </div>
-          <div class="summary-card bg-white border border-slate-200 p-4.5 rounded-2xl flex flex-col justify-between" id="summary-card-4">
-            <span class="label-mono text-[9px]">Week 5 Total</span>
-            <span class="text-lg font-black text-slate-800 mt-2 font-mono" id="summary-val-4">0.0 Hours</span>
+          <div>
+            <div class="label-mono" style="font-size: 9px; color: var(--color-blue-vibrant);">Total Hours This Period</div>
+            <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 900; color: var(--text-dark);" id="summary-total-hours">0.0 <span style="font-size: 0.875rem; font-weight: 700; color: var(--text-medium);">Hours</span></div>
+            <div style="font-size: 0.7rem; color: var(--text-light);">Total hours for <span id="total-hours-period-label">this period</span></div>
           </div>
         </div>
 
-        <!-- Total Hours Period Card (Gradient Highlight) -->
-        <div class="md:col-span-3 bg-gradient-to-br from-[#002060] to-[#0e48be] text-white p-5 rounded-3xl flex flex-col justify-between shadow-md relative overflow-hidden">
-          <div class="absolute right-3 top-3 opacity-15 pointer-events-none">
-            <i data-lucide="clock" class="h-10 w-10"></i>
+        <!-- Employee Signature -->
+        <div class="glass-card sig-card">
+          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+            <i data-lucide="edit-3"></i> Employee Signature
           </div>
-          <div class="relative z-10 space-y-1">
-            <span class="font-mono text-[9px] uppercase tracking-wider text-blue-200 block font-bold">Total Hours Period</span>
-            <span id="summary-total-hours" class="font-display text-2xl font-black block mt-2">0.0 Hours</span>
+          <div class="sig-canvas-wrap cursor-crosshair">
+            <canvas id="canvas-employee"></canvas>
+            <span id="placeholder-employee" class="sig-placeholder">Sign here</span>
           </div>
-        </div>
-      </section>
-
-      <!-- 05 — THREE SIGNATURE CANVAS COLUMNS -->
-      <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-        
-        <!-- Employee Signature Card -->
-        <div class="glass-card bg-white border border-slate-200 p-6 rounded-3xl space-y-5 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-              <i data-lucide="edit-3" class="h-5 w-5"></i>
-            </div>
-            <h3 class="font-display text-sm font-bold text-slate-800 uppercase tracking-wider">Employee Signature</h3>
-          </div>
-          <!-- Canvas drawing field -->
-          <div class="relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden h-32 w-full flex items-center justify-center cursor-crosshair shadow-inner">
-            <canvas id="canvas-employee" class="absolute inset-0 w-full h-full"></canvas>
-            <span id="placeholder-employee" class="pointer-events-none font-mono text-[10px] text-slate-400">Sign above or type name</span>
-          </div>
-          <div class="flex items-center justify-between gap-3">
-            <button type="button" id="btn-clear-employee" class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 hover:text-red-500 flex items-center gap-1 bg-transparent border-none cursor-pointer">
-              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Clear
-            </button>
-            <div class="flex items-center gap-2 text-xs">
-              <label for="date-employee" class="label-mono text-[9px]">Date</label>
-              <input type="date" id="date-employee" required class="input-flat py-1 bg-transparent border border-slate-200 rounded-lg text-slate-700 w-32 text-center">
+          <div class="sig-date-row">
+            <button type="button" id="btn-clear-employee" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1">
+              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
+              <input type="date" id="date-employee" required class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
             </div>
           </div>
         </div>
 
-        <!-- Supervisor Signature Card -->
-        <div class="glass-card bg-white border border-slate-200 p-6 rounded-3xl space-y-5 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-              <i data-lucide="user-check" class="h-5 w-5"></i>
-            </div>
-            <h3 class="font-display text-sm font-bold text-slate-800 uppercase tracking-wider">Supervisor Signature</h3>
+        <!-- Supervisor Signature -->
+        <div class="glass-card sig-card">
+          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+            <i data-lucide="user-check"></i> Supervisor Signature
           </div>
-          <!-- Canvas drawing field -->
-          <div class="relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden h-32 w-full flex items-center justify-center cursor-crosshair shadow-inner">
-            <canvas id="canvas-supervisor" class="absolute inset-0 w-full h-full"></canvas>
-            <span id="placeholder-supervisor" class="pointer-events-none font-mono text-[10px] text-slate-400">Sign above or type name</span>
+          <div class="sig-canvas-wrap cursor-crosshair">
+            <canvas id="canvas-supervisor"></canvas>
+            <span id="placeholder-supervisor" class="sig-placeholder">Sign here</span>
           </div>
-          <div class="flex items-center justify-between gap-3">
-            <button type="button" id="btn-clear-supervisor" class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 hover:text-red-500 flex items-center gap-1 bg-transparent border-none cursor-pointer">
-              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Clear
-            </button>
-            <div class="flex items-center gap-2 text-xs">
-              <label for="date-supervisor" class="label-mono text-[9px]">Date</label>
-              <input type="date" id="date-supervisor" class="input-flat py-1 bg-transparent border border-slate-200 rounded-lg text-slate-700 w-32 text-center">
+          <div class="sig-date-row">
+            <button type="button" id="btn-clear-supervisor" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1">
+              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
+              <input type="date" id="date-supervisor" class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
             </div>
           </div>
         </div>
 
-        <!-- Payroll Signature Card -->
-        <div class="glass-card bg-white border border-slate-200 p-6 rounded-3xl space-y-5 shadow-sm">
-          <div class="flex items-center gap-3">
-            <div class="p-2.5 rounded-xl bg-blue-50 text-blue-600 shrink-0">
-              <i data-lucide="shield-check" class="h-5 w-5"></i>
-            </div>
-            <h3 class="font-display text-sm font-bold text-slate-800 uppercase tracking-wider">Payroll Signature</h3>
+        <!-- Payroll Signature -->
+        <div class="glass-card sig-card">
+          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+            <i data-lucide="shield-check"></i> Payroll Signature
           </div>
-          <!-- Canvas drawing field -->
-          <div class="relative bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden h-32 w-full flex items-center justify-center cursor-crosshair shadow-inner">
-            <canvas id="canvas-payroll" class="absolute inset-0 w-full h-full"></canvas>
-            <span id="placeholder-payroll" class="pointer-events-none font-mono text-[10px] text-slate-400">Sign above or type name</span>
+          <div class="sig-canvas-wrap cursor-crosshair">
+            <canvas id="canvas-payroll"></canvas>
+            <span id="placeholder-payroll" class="sig-placeholder">Sign here</span>
           </div>
-          <div class="flex items-center justify-between gap-3">
-            <button type="button" id="btn-clear-payroll" class="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 hover:text-red-500 flex items-center gap-1 bg-transparent border-none cursor-pointer">
-              <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Clear
-            </button>
-            <div class="flex items-center gap-2 text-xs">
-              <label for="date-payroll" class="label-mono text-[9px]">Date</label>
-              <input type="date" id="date-payroll" class="input-flat py-1 bg-transparent border border-slate-200 rounded-lg text-slate-700 w-32 text-center">
+          <div class="sig-date-row">
+            <button type="button" id="btn-clear-payroll" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1">
+              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
+              <input type="date" id="date-payroll" class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
             </div>
           </div>
         </div>
+      </div>
 
-      </section>
-
-      <!-- 06 — CONTROL BUTTONS FOOTER -->
-      <footer class="flex flex-col sm:flex-row items-center justify-end gap-4 border-t border-slate-200 pt-6">
-        <button type="button" id="btn-save-draft" class="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2 text-xs font-mono font-bold">
-          <i data-lucide="save" class="h-4 w-4"></i> Save Draft
+      <!-- 06 — FOOTER ACTION BUTTONS -->
+      <div class="footer-actions">
+        <button type="button" id="btn-save-draft" class="btn-secondary">
+          <i data-lucide="save" style="width: 1rem; height: 1rem;"></i> Save Draft
         </button>
-        <button type="submit" id="btn-submit" class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2 text-xs font-mono font-bold">
-          Submit Timesheet <i data-lucide="send" class="h-4 w-4"></i>
+        <button type="button" id="btn-download-pdf-footer" class="btn-secondary">
+          <i data-lucide="download" style="width: 1rem; height: 1rem;"></i> Download PDF
         </button>
-      </footer>
+        <button type="submit" id="btn-submit" class="btn-submit">
+          <i data-lucide="check-circle" style="width: 1rem; height: 1rem;"></i> Submit Timesheet
+        </button>
+      </div>
+
+      <div class="footer-note">
+        <i data-lucide="lock" style="width: 0.75rem; height: 0.75rem;"></i> Your timesheet will be reviewed before final approval.
+      </div>
 
     </form>
-
   </div>
 
-  <!-- Submission Modal Box -->
-  <div id="modal-success" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
-    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"></div>
-    <div class="relative z-10 bg-white border border-slate-200 max-w-md w-full p-8 text-center space-y-6 shadow-2xl rounded-3xl">
-      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-blue-50 border border-blue-200 text-blue-600 shadow-sm">
-        <i data-lucide="check-circle" class="h-7 w-7"></i>
+  <!-- SUBMISSION MODAL -->
+  <div id="modal-success" class="modal-overlay hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content">
+      <div style="margin: 0 auto; width: 3.5rem; height: 3.5rem; border-radius: 50%; background: rgba(79, 70, 229, 0.1); border: 1px solid rgba(79, 70, 229, 0.2); display: flex; align-items: center; justify-content: center; color: var(--color-blue-vibrant);">
+        <i data-lucide="check-circle" style="width: 1.75rem; height: 1.75rem;"></i>
       </div>
-      <div class="space-y-2">
-        <h3 class="font-display text-2xl font-black text-slate-800 uppercase tracking-wider">Timesheet Finalized!</h3>
-        <p class="font-sans text-sm text-slate-500 leading-relaxed">
-          Your timesheet has been successfully authorized and locked. Choose an action below:
+      <div style="margin-top: 1.25rem;">
+        <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Timesheet Finalized!</h3>
+        <p style="font-size: 0.85rem; color: var(--text-medium); margin-top: 0.5rem; line-height: 1.5;">
+          Your timesheet has been authorized and locked. Choose an action:
         </p>
       </div>
-      <div class="flex flex-col gap-3">
-        <button type="button" id="btn-send-email" class="btn-primary w-full py-3 flex items-center justify-center gap-2">
-          <i data-lucide="mail" class="h-4 w-4"></i> Send to Boss (Outlook)
+      <div class="flex flex-col gap-3" style="margin-top: 1.25rem;">
+        <button type="button" id="btn-send-email" class="btn-primary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <i data-lucide="mail" style="width: 1rem; height: 1rem;"></i> Send to Boss (Outlook)
         </button>
-        <button type="button" id="btn-download-pdf" class="btn-secondary w-full py-3 flex items-center justify-center gap-2">
-          <i data-lucide="download" class="h-4 w-4"></i> Download PDF
+        <button type="button" id="btn-download-pdf" class="btn-secondary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+          <i data-lucide="download" style="width: 1rem; height: 1rem;"></i> Download PDF
         </button>
-        <button type="button" id="btn-close-modal" class="btn-secondary w-full py-3 flex items-center justify-center gap-2" style="background: transparent; border-color: transparent; color: #64748b; font-weight: bold; cursor: pointer;">
+        <button type="button" id="btn-close-modal" style="padding: 10px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-mono); font-weight: 700; font-size: 12px; cursor: pointer;">
           Back to Dashboard
         </button>
       </div>
     </div>
   </div>
 
-  <!-- PRINT-ONLY TIMESHEET REPORT -->
+  <!-- PRINT-ONLY LAYOUT -->
   <div id="print-layout">
-    <!-- Header -->
     <div class="print-header">
       <img src="livingstone_seal.png" alt="Livingstone College Logo" class="print-logo">
       <div class="print-title-block">
@@ -355,77 +301,41 @@
         <h2>SUCCESS CENTER - MONTHLY TIMESHEET</h2>
       </div>
     </div>
-    
-    <!-- Meta details -->
     <div class="print-meta-grid">
       <div><strong>Employee Name:</strong> <span id="print-emp-name">N/A</span></div>
       <div><strong>Department:</strong> Academic Support Center</div>
       <div><strong>Beginning Date:</strong> <span id="print-period-start">N/A</span></div>
       <div><strong>Ending Date:</strong> <span id="print-period-end">N/A</span></div>
     </div>
-
-    <!-- Weeks Summary Table -->
     <div class="print-section-title">WEEKLY HOUR SUMMARY</div>
     <table class="print-summary-table">
-      <thead>
-        <tr>
-          <th>Week 1</th>
-          <th>Week 2</th>
-          <th>Week 3</th>
-          <th>Week 4</th>
-          <th>Week 5</th>
-          <th>Total Hours</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td id="print-w1">0.0</td>
-          <td id="print-w2">0.0</td>
-          <td id="print-w3">0.0</td>
-          <td id="print-w4">0.0</td>
-          <td id="print-w5">0.0</td>
-          <td style="font-weight: bold;" id="print-total">0.0</td>
-        </tr>
-      </tbody>
+      <thead><tr><th>Week 1</th><th>Week 2</th><th>Week 3</th><th>Week 4</th><th>Week 5</th><th>Total Hours</th></tr></thead>
+      <tbody><tr>
+        <td id="print-w1">0.0</td><td id="print-w2">0.0</td><td id="print-w3">0.0</td><td id="print-w4">0.0</td><td id="print-w5">0.0</td>
+        <td style="font-weight: bold;" id="print-total">0.0</td>
+      </tr></tbody>
     </table>
-
-    <!-- Detailed Daily Shifts Logs -->
     <div class="print-section-title">DETAILED DAILY LOGS & TUTORING SESSIONS</div>
     <table class="print-details-table">
-      <thead>
-        <tr>
-          <th style="width: 15%;">Date</th>
-          <th style="width: 25%;">Shift 1 (In/Out)</th>
-          <th style="width: 25%;">Shift 2 (In/Out)</th>
-          <th style="width: 12%;">Daily Hours</th>
-          <th style="width: 23%;">Tutoring Sessions & Progress Notes</th>
-        </tr>
-      </thead>
-      <tbody id="print-details-body">
-        <!-- Dynamically populated daily logs -->
-      </tbody>
+      <thead><tr>
+        <th style="width: 15%;">Date</th><th style="width: 25%;">Shift 1 (In/Out)</th><th style="width: 25%;">Shift 2 (In/Out)</th>
+        <th style="width: 12%;">Daily Hours</th><th style="width: 23%;">Tutoring Sessions & Progress Notes</th>
+      </tr></thead>
+      <tbody id="print-details-body"></tbody>
     </table>
-
-    <!-- Signatures -->
     <div class="print-signatures-grid">
       <div class="print-sig-box">
-        <div class="print-sig-line">
-          <img id="print-sig-img-employee" src="" alt="Employee Signature" class="print-sig-img">
-        </div>
+        <div class="print-sig-line"><img id="print-sig-img-employee" src="" alt="Employee Signature" class="print-sig-img"></div>
         <div class="print-sig-label">Employee Signature</div>
         <div class="print-sig-date">Date: <span id="print-sig-date-employee">N/A</span></div>
       </div>
       <div class="print-sig-box">
-        <div class="print-sig-line">
-          <img id="print-sig-img-supervisor" src="" alt="Supervisor Signature" class="print-sig-img">
-        </div>
+        <div class="print-sig-line"><img id="print-sig-img-supervisor" src="" alt="Supervisor Signature" class="print-sig-img"></div>
         <div class="print-sig-label">Supervisor Signature</div>
         <div class="print-sig-date">Date: <span id="print-sig-date-supervisor">N/A</span></div>
       </div>
       <div class="print-sig-box">
-        <div class="print-sig-line">
-          <img id="print-sig-img-payroll" src="" alt="Payroll Signature" class="print-sig-img">
-        </div>
+        <div class="print-sig-line"><img id="print-sig-img-payroll" src="" alt="Payroll Signature" class="print-sig-img"></div>
         <div class="print-sig-label">Payroll Signature</div>
         <div class="print-sig-date">Date: <span id="print-sig-date-payroll">N/A</span></div>
       </div>
