@@ -4,16 +4,45 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Student Success Center Monthly Timesheet | Livingstone College</title>
-  <!-- Google Fonts: Outfit (Display), Inter (Body), JetBrains Mono (Numbers) -->
+  <!-- Google Fonts: Outfit (Display), Inter (Body), JetBrains Mono (Numbers), Caveat (Script) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <!-- Lucide Icons via CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
   <!-- Main Redesigned Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-gray-50 text-slate-800 min-h-screen relative overflow-x-hidden pb-16 font-sans">
+
+  <!-- 00 — SPLASH SCREEN OVERLAY -->
+  <div id="splash-screen">
+    <!-- Top Pill -->
+    <div style="border-radius: 9999px; border: 1px solid rgba(148, 163, 184, 0.4); padding: 4px 20px; font-size: 12px; font-style: italic; font-family: Georgia, serif; color: #475569;">
+      Success Center
+    </div>
+    <!-- Title Heading -->
+    <div style="text-align: center; margin-top: 10px;">
+      <h1 class="font-display text-4xl sm:text-5xl font-black tracking-widest text-[#002060] uppercase leading-none" style="letter-spacing: 0.1em; font-size: 2.5rem; font-weight: 900; color: #002060;">TIME TO</h1>
+      <div class="text-script-blue font-handwritten">Clock It</div>
+    </div>
+    <!-- Rotating Clock Loader -->
+    <div class="splash-loader-container">
+      <div class="splash-loader-ring"></div>
+      <div class="splash-loader-clock">
+        <div class="clock-hand-hour"></div>
+        <div class="clock-hand-minute"></div>
+      </div>
+    </div>
+    <!-- Subtitle status -->
+    <div style="color: #94a3b8; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;">
+      Preparing your timesheet...
+    </div>
+    <!-- Bottom Slogan -->
+    <div class="splash-slogan">
+      No paper. No stress. No problem.
+    </div>
+  </div>
   
   <div class="max-w-7xl mx-auto px-4 py-8">
     

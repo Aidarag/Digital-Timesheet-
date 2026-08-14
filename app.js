@@ -631,6 +631,17 @@ function loadDraft() {
 // -------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
+  // Splash Screen Fade Out Trigger
+  const splash = document.getElementById('splash-screen');
+  if (splash) {
+    setTimeout(() => {
+      splash.classList.add('fade-out-splash');
+      setTimeout(() => {
+        splash.remove();
+      }, 500); // matches the transition-all duration-500 setting
+    }, 1800); // 1.8 seconds loading screen delay
+  }
+
   initDefaultWeeks();
   renderWeekTabs();
   renderDailyRows();
