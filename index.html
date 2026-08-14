@@ -40,7 +40,21 @@
   <nav class="top-nav">
     <div class="nav-brand">
       <div class="nav-icon">
-        <i data-lucide="clock" style="width: 1.25rem; height: 1.25rem;"></i>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Outer rounded document shape -->
+          <rect x="3" y="1" width="18" height="22" rx="4" fill="rgba(255,255,255,0.2)" stroke="rgba(255,255,255,0.6)" stroke-width="1.2"/>
+          <!-- Clock circle -->
+          <circle cx="12" cy="10.5" r="5.5" fill="rgba(255,255,255,0.15)" stroke="#fff" stroke-width="1.5"/>
+          <!-- Hour hand -->
+          <line x1="12" y1="10.5" x2="12" y2="7" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Minute hand -->
+          <line x1="12" y1="10.5" x2="14.8" y2="10.5" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/>
+          <!-- Center dot -->
+          <circle cx="12" cy="10.5" r="1" fill="#fff"/>
+          <!-- Bottom lines (timesheet rows) -->
+          <line x1="7" y1="18.5" x2="17" y2="18.5" stroke="rgba(255,255,255,0.5)" stroke-width="1" stroke-linecap="round"/>
+          <line x1="7" y1="20.5" x2="14" y2="20.5" stroke="rgba(255,255,255,0.35)" stroke-width="1" stroke-linecap="round"/>
+        </svg>
       </div>
       <div class="nav-brand-text">
         <h1>Success Center</h1>
