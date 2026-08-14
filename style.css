@@ -62,38 +62,42 @@ body::after {
   z-index: 0;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(100px);
-  opacity: 0.45;
+  filter: blur(90px);
+  opacity: 0.6;
 }
 
 body::before {
-  width: 600px;
-  height: 600px;
-  top: -10%;
-  left: -5%;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.22) 0%, rgba(99, 102, 241, 0.08) 50%, transparent 70%);
-  animation: aura-drift-1 18s ease-in-out infinite alternate;
+  width: 650px;
+  height: 650px;
+  top: -12%;
+  left: -8%;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.35) 0%, rgba(99, 102, 241, 0.15) 45%, transparent 70%);
+  animation: aura-drift-1 12s ease-in-out infinite alternate;
 }
 
 body::after {
-  width: 500px;
-  height: 500px;
-  bottom: -8%;
-  right: -5%;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.18) 0%, rgba(139, 92, 246, 0.06) 50%, transparent 70%);
-  animation: aura-drift-2 22s ease-in-out infinite alternate;
+  width: 550px;
+  height: 550px;
+  bottom: -10%;
+  right: -8%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.32) 0%, rgba(139, 92, 246, 0.12) 45%, transparent 70%);
+  animation: aura-drift-2 14s ease-in-out infinite alternate;
 }
 
 @keyframes aura-drift-1 {
   0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(60px, 40px) scale(1.08); }
-  100% { transform: translate(-30px, 60px) scale(0.95); }
+  25%  { transform: translate(80px, 30px) scale(1.06); }
+  50%  { transform: translate(40px, 70px) scale(1.12); }
+  75%  { transform: translate(-20px, 50px) scale(1.04); }
+  100% { transform: translate(-50px, 80px) scale(0.95); }
 }
 
 @keyframes aura-drift-2 {
   0%   { transform: translate(0, 0) scale(1); }
-  50%  { transform: translate(-50px, -30px) scale(1.1); }
-  100% { transform: translate(40px, -50px) scale(0.97); }
+  25%  { transform: translate(-60px, -20px) scale(1.08); }
+  50%  { transform: translate(-30px, -60px) scale(1.14); }
+  75%  { transform: translate(30px, -40px) scale(1.02); }
+  100% { transform: translate(60px, -70px) scale(0.96); }
 }
 
 /* Main container */
