@@ -365,13 +365,13 @@ select.input-flat {
 .btn-secondary:active { transform: scale(0.98); }
 
 .btn-submit {
-  background: linear-gradient(135deg, #ef4444, #dc2626);
+  background: linear-gradient(135deg, #002060, #4f46e5, #7c3aed);
   border: none;
   border-radius: 12px;
   color: #ffffff;
   padding: 12px 28px;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.25);
+  box-shadow: 0 4px 16px rgba(79, 70, 229, 0.3);
   transition: var(--transition-smooth);
   font-family: var(--font-mono);
   font-weight: 700;
@@ -379,7 +379,7 @@ select.input-flat {
 }
 
 .btn-submit:hover {
-  box-shadow: 0 6px 24px rgba(239, 68, 68, 0.35);
+  box-shadow: 0 6px 24px rgba(79, 70, 229, 0.4);
   transform: translateY(-1px);
 }
 
