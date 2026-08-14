@@ -895,3 +895,161 @@ canvas {
     padding: 14px !important;
   }
 }
+
+/* -------------------------------------------------------------
+ * PDF Export & System Print Layout Stylesheet
+ * ------------------------------------------------------------- */
+#print-layout {
+  display: none;
+}
+
+@media print {
+  /* Hide interactive screens & overlays */
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+  
+  #splash-screen, .max-w-7xl, #modal-success, header, footer {
+    display: none !important;
+  }
+  
+  /* Reveal formal printable template */
+  #print-layout {
+    display: block !important;
+    padding: 24px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    line-height: 1.4;
+  }
+  
+  .print-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    border-bottom: 2px solid #002060;
+    padding-bottom: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  .print-logo {
+    width: 3.5rem;
+    height: 3.5rem;
+    object-fit: contain;
+  }
+  
+  .print-title-block h1 {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    color: #002060;
+    font-weight: 900;
+    margin: 0;
+    line-height: 1.1;
+  }
+  
+  .print-title-block h2 {
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    color: #475569;
+    font-weight: 700;
+    margin-top: 2px;
+    letter-spacing: 0.05em;
+  }
+  
+  .print-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    font-size: 11px;
+    margin-bottom: 1.25rem;
+    background: #f8fafc;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+  }
+  
+  .print-section-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 800;
+    color: #002060;
+    margin-top: 1.25rem;
+    margin-bottom: 0.375rem;
+    border-bottom: 1px solid #cbd5e1;
+    padding-bottom: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  
+  .print-summary-table, .print-details-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1.25rem;
+    font-size: 10px;
+  }
+  
+  .print-summary-table th, .print-details-table th {
+    background-color: #002060 !important;
+    color: #ffffff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    padding: 6px 8px;
+    font-weight: bold;
+    border: 1px solid #cbd5e1;
+    text-transform: uppercase;
+    font-size: 8px;
+    letter-spacing: 0.05em;
+  }
+  
+  .print-summary-table td, .print-details-table td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    text-align: center;
+    background: transparent !important;
+  }
+  
+  .print-details-table td {
+    text-align: left;
+  }
+  
+  .print-signatures-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+  }
+  
+  .print-sig-box {
+    text-align: center;
+  }
+  
+  .print-sig-line {
+    border-bottom: 1px solid #475569;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 4px;
+  }
+  
+  .print-sig-img {
+    max-height: 40px;
+    max-width: 100%;
+    object-fit: contain;
+  }
+  
+  .print-sig-label {
+    font-weight: bold;
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #002060;
+  }
+  
+  .print-sig-date {
+    font-size: 9px;
+    color: #475569;
+    margin-top: 2px;
+  }
+}

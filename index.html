@@ -328,13 +328,106 @@
       <div class="space-y-2">
         <h3 class="font-display text-2xl font-black text-slate-800 uppercase tracking-wider">Timesheet Finalized!</h3>
         <p class="font-sans text-sm text-slate-500 leading-relaxed">
-          We are opening your email client (Outlook) to send the detailed timesheet report to <strong>bdavis1@livingstone.edu</strong>.
+          Your timesheet has been successfully authorized and locked. Choose an action below:
         </p>
       </div>
-      <div>
-        <button type="button" id="btn-close-modal" class="btn-primary w-full py-3">
+      <div class="flex flex-col gap-3">
+        <button type="button" id="btn-send-email" class="btn-primary w-full py-3 flex items-center justify-center gap-2">
+          <i data-lucide="mail" class="h-4 w-4"></i> Send to Boss (Outlook)
+        </button>
+        <button type="button" id="btn-download-pdf" class="btn-secondary w-full py-3 flex items-center justify-center gap-2">
+          <i data-lucide="download" class="h-4 w-4"></i> Download PDF
+        </button>
+        <button type="button" id="btn-close-modal" class="btn-secondary w-full py-3 flex items-center justify-center gap-2" style="background: transparent; border-color: transparent; color: #64748b; font-weight: bold; cursor: pointer;">
           Back to Dashboard
         </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PRINT-ONLY TIMESHEET REPORT -->
+  <div id="print-layout">
+    <!-- Header -->
+    <div class="print-header">
+      <img src="livingstone_seal.png" alt="Livingstone College Logo" class="print-logo">
+      <div class="print-title-block">
+        <h1>LIVINGSTONE COLLEGE</h1>
+        <h2>SUCCESS CENTER - MONTHLY TIMESHEET</h2>
+      </div>
+    </div>
+    
+    <!-- Meta details -->
+    <div class="print-meta-grid">
+      <div><strong>Employee Name:</strong> <span id="print-emp-name">N/A</span></div>
+      <div><strong>Department:</strong> Academic Support Center</div>
+      <div><strong>Beginning Date:</strong> <span id="print-period-start">N/A</span></div>
+      <div><strong>Ending Date:</strong> <span id="print-period-end">N/A</span></div>
+    </div>
+
+    <!-- Weeks Summary Table -->
+    <div class="print-section-title">WEEKLY HOUR SUMMARY</div>
+    <table class="print-summary-table">
+      <thead>
+        <tr>
+          <th>Week 1</th>
+          <th>Week 2</th>
+          <th>Week 3</th>
+          <th>Week 4</th>
+          <th>Week 5</th>
+          <th>Total Hours</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td id="print-w1">0.0</td>
+          <td id="print-w2">0.0</td>
+          <td id="print-w3">0.0</td>
+          <td id="print-w4">0.0</td>
+          <td id="print-w5">0.0</td>
+          <td style="font-weight: bold;" id="print-total">0.0</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Detailed Daily Shifts Logs -->
+    <div class="print-section-title">DETAILED DAILY LOGS & TUTORING SESSIONS</div>
+    <table class="print-details-table">
+      <thead>
+        <tr>
+          <th style="width: 15%;">Date</th>
+          <th style="width: 25%;">Shift 1 (In/Out)</th>
+          <th style="width: 25%;">Shift 2 (In/Out)</th>
+          <th style="width: 12%;">Daily Hours</th>
+          <th style="width: 23%;">Tutoring Sessions & Progress Notes</th>
+        </tr>
+      </thead>
+      <tbody id="print-details-body">
+        <!-- Dynamically populated daily logs -->
+      </tbody>
+    </table>
+
+    <!-- Signatures -->
+    <div class="print-signatures-grid">
+      <div class="print-sig-box">
+        <div class="print-sig-line">
+          <img id="print-sig-img-employee" src="" alt="Employee Signature" class="print-sig-img">
+        </div>
+        <div class="print-sig-label">Employee Signature</div>
+        <div class="print-sig-date">Date: <span id="print-sig-date-employee">N/A</span></div>
+      </div>
+      <div class="print-sig-box">
+        <div class="print-sig-line">
+          <img id="print-sig-img-supervisor" src="" alt="Supervisor Signature" class="print-sig-img">
+        </div>
+        <div class="print-sig-label">Supervisor Signature</div>
+        <div class="print-sig-date">Date: <span id="print-sig-date-supervisor">N/A</span></div>
+      </div>
+      <div class="print-sig-box">
+        <div class="print-sig-line">
+          <img id="print-sig-img-payroll" src="" alt="Payroll Signature" class="print-sig-img">
+        </div>
+        <div class="print-sig-label">Payroll Signature</div>
+        <div class="print-sig-date">Date: <span id="print-sig-date-payroll">N/A</span></div>
       </div>
     </div>
   </div>

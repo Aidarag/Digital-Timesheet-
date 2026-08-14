@@ -804,9 +804,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let hasValidationError = false;
     timesheetState.weeks.forEach((week, wIdx) => {
       week.forEach((day, dIdx) => {
-        const p1 = getHoursDiff(day.in1, day.out1);
-        const p2 = getHoursDiff(day.in2, day.out2);
-        
         if ((day.in1 && !day.out1) || (!day.in1 && day.out1) || (day.in2 && !day.out2) || (!day.in2 && day.out2)) {
           alert(`Week ${wIdx+1} - ${day.dayNameFull}: Complete both In and Out timestamps for logged shifts.`);
           hasValidationError = true;
@@ -818,18 +815,129 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Lock inputs
     timesheetState.isSubmitted = true;
-    document.querySelectorAll('input, select, textarea, button:not(#btn-close-modal)').forEach(el => {
+    document.querySelectorAll('input, select, textarea, button:not(#btn-close-modal):not(#btn-send-email):not(#btn-download-pdf)').forEach(el => {
       el.disabled = true;
       el.classList.add('cursor-not-allowed');
     });
 
     document.getElementById('modal-success').classList.remove('hidden');
+  });
 
-    // Trigger opening Outlook email
+  // Success Modal Actions
+  document.getElementById('btn-send-email').addEventListener('click', () => {
     sendTimesheetEmail();
+  });
+
+  document.getElementById('btn-download-pdf').addEventListener('click', () => {
+    generateTimesheetPDF();
   });
 
   document.getElementById('btn-close-modal').addEventListener('click', () => {
     document.getElementById('modal-success').classList.add('hidden');
   });
+
+  // Print PDF Generator
+  function generateTimesheetPDF() {
+    const employeeName = document.getElementById('emp-name').value || 'Employee';
+    const startPeriod = document.getElementById('period-start').value || 'N/A';
+    const endPeriod = document.getElementById('period-end').value || 'N/A';
+
+    // Populate meta
+    document.getElementById('print-emp-name').textContent = employeeName;
+    document.getElementById('print-period-start').textContent = startPeriod;
+    document.getElementById('print-period-end').textContent = endPeriod;
+
+    // Calculate weekly sums
+    let weekTotals = [0, 0, 0, 0, 0];
+    let grandTotal = 0;
+    timesheetState.weeks.forEach((week, wIdx) => {
+      let weekSum = 0;
+      week.forEach(day => {
+        const p1 = getHoursDiff(day.in1, day.out1);
+        const p2 = getHoursDiff(day.in2, day.out2);
+        weekSum += (p1 + p2);
+      });
+      weekTotals[wIdx] = weekSum;
+      grandTotal += weekSum;
+      document.getElementById(`print-w${wIdx + 1}`).textContent = weekSum.toFixed(1);
+    });
+    document.getElementById('print-total').textContent = grandTotal.toFixed(1);
+
+    // Compile detailed list
+    const tbody = document.getElementById('print-details-body');
+    tbody.innerHTML = '';
+
+    timesheetState.weeks.forEach((week, wIdx) => {
+      week.forEach(day => {
+        const p1 = getHoursDiff(day.in1, day.out1);
+        const p2 = getHoursDiff(day.in2, day.out2);
+        const totalHours = p1 + p2;
+        const hasSessions = day.sessions && day.sessions.length > 0;
+
+        // Only display days that have logged shifts or sessions
+        if (totalHours > 0 || hasSessions) {
+          const tr = document.createElement('tr');
+          
+          // Format sessions text
+          let sessionsText = 'No sessions logged';
+          if (hasSessions) {
+            sessionsText = day.sessions.map(s => {
+              return `• ${s.studentName} (${s.studentId})\n  Skills: ${s.skills}\n  Notes: ${s.progress}`;
+            }).join('\n\n');
+          }
+
+          tr.innerHTML = `
+            <td style="font-weight: bold; white-space: nowrap;">${day.dayNameFull}<br><span style="font-size: 8px; font-weight: normal; color: #475569;">${day.dateVal || 'N/A'}</span></td>
+            <td>${day.in1 ? `${day.in1} - ${day.out1}` : '--'}</td>
+            <td>${day.in2 ? `${day.in2} - ${day.out2}` : '--'}</td>
+            <td style="font-weight: bold;">${totalHours.toFixed(1)}</td>
+            <td style="white-space: pre-line; font-size: 9px; line-height: 1.3;">${sessionsText}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+      });
+    });
+
+    if (tbody.children.length === 0) {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic;">No shifts or tutoring sessions logged during this period.</td>`;
+      tbody.appendChild(tr);
+    }
+
+    // Transfer signatures
+    transferSignatureToImg('canvas-employee', 'print-sig-img-employee');
+    transferSignatureToImg('canvas-supervisor', 'print-sig-img-supervisor');
+    transferSignatureToImg('canvas-payroll', 'print-sig-img-payroll');
+
+    // Populate signature dates
+    document.getElementById('print-sig-date-employee').textContent = timesheetState.signatureDates.employee || 'N/A';
+    document.getElementById('print-sig-date-supervisor').textContent = timesheetState.signatureDates.supervisor || 'N/A';
+    document.getElementById('print-sig-date-payroll').textContent = timesheetState.signatureDates.payroll || 'N/A';
+
+    // Trigger print view
+    window.print();
+  }
+
+  function transferSignatureToImg(canvasId, imgId) {
+    const canvas = document.getElementById(canvasId);
+    const img = document.getElementById(imgId);
+    if (canvas && img) {
+      // Check if canvas is drawn on (not completely blank/empty)
+      const isBlank = isCanvasBlank(canvas);
+      if (!isBlank) {
+        img.src = canvas.toDataURL();
+        img.style.display = 'block';
+      } else {
+        img.src = '';
+        img.style.display = 'none';
+      }
+    }
+  }
+
+  function isCanvasBlank(canvas) {
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+  }
 });
