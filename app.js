@@ -700,6 +700,96 @@ document.addEventListener('DOMContentLoaded', () => {
     loadDraft();
   });
 
+  // Helper to format and open Outlook mailto compose draft
+  function sendTimesheetEmail() {
+    const employeeName = document.getElementById('emp-name').value || 'Employee';
+    const department = document.getElementById('emp-dept').value || 'Academic Support Center';
+    const startPeriod = document.getElementById('period-start').value || 'N/A';
+    const endPeriod = document.getElementById('period-end').value || 'N/A';
+
+    // Construct Subject
+    const subject = `[Timesheet Submission] ${employeeName} - ASC Student Success Center (${startPeriod} to ${endPeriod})`;
+
+    // Calculate totals
+    let weekTotals = [0, 0, 0, 0, 0];
+    let grandTotal = 0;
+    timesheetState.weeks.forEach((week, wIdx) => {
+      let weekSum = 0;
+      week.forEach(day => {
+        const p1 = getHoursDiff(day.in1, day.out1);
+        const p2 = getHoursDiff(day.in2, day.out2);
+        weekSum += (p1 + p2);
+      });
+      weekTotals[wIdx] = weekSum;
+      grandTotal += weekSum;
+    });
+
+    // Construct Body Text
+    let body = `LIVINGSTONE COLLEGE - STUDENT SUCCESS CENTER\n`;
+    body += `MONTHLY TIMESHEET SUBMISSION\n`;
+    body += `==============================================\n\n`;
+    body += `EMPLOYEE DETAILS:\n`;
+    body += `- Name: ${employeeName}\n`;
+    body += `- Department: ${department}\n`;
+    body += `- Reporting Period: ${startPeriod} to ${endPeriod}\n\n`;
+    
+    body += `HOURS SUMMARY BY WEEK:\n`;
+    weekTotals.forEach((total, idx) => {
+      body += `- Week ${idx + 1}: ${total.toFixed(1)} Hours\n`;
+    });
+    body += `- GRAND TOTAL HOURS: ${grandTotal.toFixed(1)} Hours\n\n`;
+
+    body += `DAILY LOG DETAILS & TUTORING SESSIONS:\n`;
+    body += `----------------------------------------------\n`;
+    timesheetState.weeks.forEach((week, wIdx) => {
+      body += `\n[WEEK ${wIdx + 1}]\n`;
+      let weekHasLogs = false;
+      week.forEach(day => {
+        const p1 = getHoursDiff(day.in1, day.out1);
+        const p2 = getHoursDiff(day.in2, day.out2);
+        const totalDayHours = p1 + p2;
+        
+        // If there are hours worked or a student session, log it
+        if (totalDayHours > 0 || (day.sessions && day.sessions.length > 0)) {
+          weekHasLogs = true;
+          const formattedDate = day.dateVal || 'N/A';
+          body += `- ${day.dayNameFull} (${formattedDate}):\n`;
+          if (totalDayHours > 0) {
+            body += `  * Hours Logged: ${totalDayHours.toFixed(1)} Hours (Shift 1: ${day.in1 || '--'} to ${day.out1 || '--'} | Shift 2: ${day.in2 || '--'} to ${day.out2 || '--'})\n`;
+          }
+          if (day.sessions && day.sessions.length > 0) {
+            body += `  * Tutoring Sessions:\n`;
+            day.sessions.forEach(sess => {
+              body += `    + Student: ${sess.studentName} (${sess.studentId})\n`;
+              body += `      Skills Worked On: ${sess.skills}\n`;
+              body += `      Progress Notes: ${sess.progress}\n`;
+            });
+          }
+        }
+      });
+      if (!weekHasLogs) {
+        body += `  (No hours or sessions logged for this week)\n`;
+      }
+    });
+
+    body += `\n==============================================\n`;
+    body += `SIGNATURE METADATA:\n`;
+    body += `- Employee Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.employee || 'N/A'})\n`;
+    if (timesheetState.signatures.supervisor) {
+      body += `- Supervisor Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.supervisor || 'N/A'})\n`;
+    }
+    if (timesheetState.signatures.payroll) {
+      body += `- Payroll Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.payroll || 'N/A'})\n`;
+    }
+    body += `\nSubmitted on: ${new Date().toLocaleString()}\n`;
+
+    // Encode Mailto Link
+    const mailtoUrl = `mailto:bdavis1@livingstone.edu?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    
+    // Trigger open default mail client
+    window.location.href = mailtoUrl;
+  }
+
   // Form Submit validation checks
   document.getElementById('timesheet-form').addEventListener('submit', (e) => {
     e.preventDefault();
@@ -734,6 +824,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('modal-success').classList.remove('hidden');
+
+    // Trigger opening Outlook email
+    sendTimesheetEmail();
   });
 
   document.getElementById('btn-close-modal').addEventListener('click', () => {
