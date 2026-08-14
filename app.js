@@ -2,20 +2,6 @@
  * Student Success Center Digital Timesheet - Redesigned SaaS Logic
  * ------------------------------------------------------------- */
 
-// Mock Student Database for Searchable Select Dropdown
-const studentDatabase = [
-  { id: "LC-1082", name: "Marcus Vance" },
-  { id: "LC-2194", name: "Aaliyah Jones" },
-  { id: "LC-3094", name: "Tariq Simmons" },
-  { id: "LC-4581", name: "Maya Lin" },
-  { id: "LC-5920", name: "Darnell Washington" },
-  { id: "LC-6721", name: "Chloe Tremblay" },
-  { id: "LC-7182", name: "Sarah Chen" },
-  { id: "LC-8291", name: "Brian O'Connor" },
-  { id: "LC-9012", name: "Daniel Kim" },
-  { id: "LC-9943", name: "Elena Rostova" }
-];
-
 // Redesigned Application State
 let timesheetState = {
   employeeName: '',
@@ -349,27 +335,18 @@ function renderCellSessions(wIdx, dIdx) {
   const day = timesheetState.weeks[wIdx][dIdx];
   
   day.sessions.forEach((session, sIdx) => {
-    // 1. Render Student Dropdown slot
-    const dropdownDiv = document.createElement('div');
-    dropdownDiv.className = 'cell-session-row relative';
-    dropdownDiv.innerHTML = `
-      <div class="search-dropdown" id="dropdown-${wIdx}-${dIdx}-${sIdx}">
-        <div class="dropdown-selected text-xs" id="dropdown-select-${wIdx}-${dIdx}-${sIdx}">
-          <span class="dropdown-label truncate">
-            ${session.studentName ? `${session.studentName} (${session.studentId})` : 'Select Student...'}
-          </span>
-          <i data-lucide="chevron-down" class="h-3 w-3 text-slate-400"></i>
-        </div>
-        <div class="dropdown-list" id="dropdown-list-${wIdx}-${dIdx}-${sIdx}">
-          <input type="text" class="dropdown-search-input" placeholder="Search..." id="dropdown-search-${wIdx}-${dIdx}-${sIdx}">
-          <div class="dropdown-options-container" id="dropdown-options-${wIdx}-${dIdx}-${sIdx}"></div>
-        </div>
-      </div>
+    // 1. Render Student Input slot (Tutor types name/ID manually)
+    const studentDiv = document.createElement('div');
+    studentDiv.className = 'cell-session-row';
+    studentDiv.innerHTML = `
+      <input type="text" class="table-input py-2 text-xs" placeholder="Student Name / ID..." value="${session.studentName || ''}" id="student-input-${wIdx}-${dIdx}-${sIdx}">
     `;
-    studentCell.appendChild(dropdownDiv);
+    studentCell.appendChild(studentDiv);
     
-    // Initialize searchable selection
-    initSearchDropdown(wIdx, dIdx, sIdx, session);
+    document.getElementById(`student-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
+      session.studentName = e.target.value;
+      session.studentId = ''; // Not used anymore, kept for data compatibility
+    });
     
     // 2. Render Skills Input slot
     const skillsDiv = document.createElement('div');
@@ -406,61 +383,6 @@ function renderCellSessions(wIdx, dIdx) {
   });
   
   lucide.createIcons();
-}
-
-function initSearchDropdown(wIdx, dIdx, sIdx, session) {
-  const selectBox = document.getElementById(`dropdown-select-${wIdx}-${dIdx}-${sIdx}`);
-  const listEl = document.getElementById(`dropdown-list-${wIdx}-${dIdx}-${sIdx}`);
-  const searchInput = document.getElementById(`dropdown-search-${wIdx}-${dIdx}-${sIdx}`);
-  const optionsContainer = document.getElementById(`dropdown-options-${wIdx}-${dIdx}-${sIdx}`);
-  
-  selectBox.addEventListener('click', (e) => {
-    e.stopPropagation();
-    const isHidden = listEl.style.display !== 'block';
-    document.querySelectorAll('.dropdown-list').forEach(el => el.style.display = 'none');
-    
-    if (isHidden) {
-      listEl.style.display = 'block';
-      searchInput.focus();
-      searchInput.value = '';
-      populateOptions(studentDatabase);
-    }
-  });
-
-  document.addEventListener('click', () => {
-    listEl.style.display = 'none';
-  });
-
-  listEl.addEventListener('click', (e) => e.stopPropagation());
-
-  searchInput.addEventListener('input', (e) => {
-    const val = e.target.value.toLowerCase();
-    const filtered = studentDatabase.filter(s =>
-      s.name.toLowerCase().includes(val) || s.id.toLowerCase().includes(val)
-    );
-    populateOptions(filtered);
-  });
-
-  function populateOptions(items) {
-    optionsContainer.innerHTML = '';
-    if (items.length === 0) {
-      optionsContainer.innerHTML = `<div class="dropdown-option text-[11px] text-gray-400 italic text-center">No results</div>`;
-      return;
-    }
-    
-    items.forEach(student => {
-      const opt = document.createElement('div');
-      opt.className = 'dropdown-option text-left';
-      opt.innerHTML = `<strong>${student.name}</strong> <span class="text-slate-400">(${student.id})</span>`;
-      opt.addEventListener('click', () => {
-        session.studentId = student.id;
-        session.studentName = student.name;
-        selectBox.querySelector('.dropdown-label').innerText = `${student.name} (${student.id})`;
-        listEl.style.display = 'none';
-      });
-      optionsContainer.appendChild(opt);
-    });
-  }
 }
 
 // -------------------------------------------------------------
@@ -731,9 +653,9 @@ document.addEventListener('DOMContentLoaded', () => {
           if (day.sessions && day.sessions.length > 0) {
             body += `  * Tutoring Sessions:\n`;
             day.sessions.forEach(sess => {
-              body += `    + Student: ${sess.studentName} (${sess.studentId})\n`;
-              body += `      Skills Worked On: ${sess.skills}\n`;
-              body += `      Progress Notes: ${sess.progress}\n`;
+              body += `    + Student: ${sess.studentName}\n`;
+              body += `      Skills Worked On: ${sess.assignment || ''}\n`;
+              body += `      Progress Notes: ${sess.notes || ''}\n`;
             });
           }
         }
@@ -853,7 +775,7 @@ document.addEventListener('DOMContentLoaded', () => {
           let sessionsText = 'No sessions logged';
           if (hasSessions) {
             sessionsText = day.sessions.map(s => {
-              return `• ${s.studentName} (${s.studentId})\n  Skills: ${s.skills}\n  Notes: ${s.progress}`;
+              return `• ${s.studentName}\n  Skills: ${s.assignment || ''}\n  Notes: ${s.notes || ''}`;
             }).join('\n\n');
           }
 
