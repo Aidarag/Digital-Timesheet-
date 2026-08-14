@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------
- * Student Success Center Digital Timesheet - Application Logic
+ * Student Success Center Digital Timesheet - Redesigned SaaS Logic
  * ------------------------------------------------------------- */
 
 // Mock Student Database for Searchable Select Dropdown
@@ -16,22 +16,30 @@ const studentDatabase = [
   { id: "LC-9943", name: "Elena Rostova" }
 ];
 
-// Application State
+// Redesigned Application State
 let timesheetState = {
   employeeName: '',
   periodStart: '',
   periodEnd: '',
-  weeks: [], // Array of weeks, each containing 5 days (Mon-Fri)
-  signature: '', // dataURL
-  signatureDate: '',
+  weeks: [], // Array of weeks, each containing 7 days (Monday to Sunday)
+  signatures: {
+    employee: '',
+    supervisor: '',
+    payroll: ''
+  },
+  signatureDates: {
+    employee: '',
+    supervisor: '',
+    payroll: ''
+  },
   isSubmitted: false
 };
 
-// Initial setup parameters
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAYS_OF_WEEK_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 let currentWeekIndex = 0;
 
-// Initialize the default 5 weeks
+// Initialize 5 weeks with 7 days each
 function initDefaultWeeks() {
   timesheetState.weeks = [];
   for (let w = 0; w < 5; w++) {
@@ -41,16 +49,19 @@ function initDefaultWeeks() {
 
 function createEmptyWeek() {
   const days = [];
-  for (let d = 0; d < 5; d++) {
+  for (let d = 0; d < 7; d++) {
     days.push({
       dayName: DAYS_OF_WEEK[d],
+      dayNameFull: DAYS_OF_WEEK_FULL[d],
       date: '',
       in1: '',
       out1: '',
       in2: '',
       out2: '',
       hours: 0.00,
-      sessions: []
+      sessions: [
+        { studentId: '', studentName: '', assignment: '', notes: '' } // start with 1 default session
+      ]
     });
   }
   return days;
@@ -60,7 +71,6 @@ function createEmptyWeek() {
 // Auto-calculation Handlers
 // -------------------------------------------------------------
 
-// Calculate work hours between two times
 function getHoursDiff(inTime, outTime, rowIdForWarning) {
   if (!inTime || !outTime) return 0;
   
@@ -72,7 +82,7 @@ function getHoursDiff(inTime, outTime, rowIdForWarning) {
   
   if (outTotalMin < inTotalMin) {
     if (rowIdForWarning) {
-      showValidationError(rowIdForWarning, "Out time cannot be before In time.");
+      alert(`Shift error in ${rowIdForWarning}: Out time cannot precede In time.`);
     }
     return 0;
   }
@@ -80,27 +90,21 @@ function getHoursDiff(inTime, outTime, rowIdForWarning) {
   return (outTotalMin - inTotalMin) / 60;
 }
 
-// Parse daily inputs and calculate total daily hours
 function updateDailyHours(weekIndex, dayIndex) {
   const day = timesheetState.weeks[weekIndex][dayIndex];
-  const rowId = `day-${weekIndex}-${dayIndex}`;
+  const rowLabel = `Week ${weekIndex + 1} - ${day.dayNameFull}`;
   
-  clearValidationError(rowId);
-  
-  const period1 = getHoursDiff(day.in1, day.out1, rowId);
-  const period2 = getHoursDiff(day.in2, day.out2, rowId);
+  const period1 = getHoursDiff(day.in1, day.out1, rowLabel);
+  const period2 = getHoursDiff(day.in2, day.out2, rowLabel);
   
   day.hours = parseFloat((period1 + period2).toFixed(2));
   
-  // Refresh UI calculations
+  // Recalculate and update UI labels
   recalculateTotals();
 }
 
-// Recalculate and update the UI summaries
 function recalculateTotals() {
   let periodTotal = 0;
-  const weeksStack = document.getElementById('summary-weeks-stack');
-  weeksStack.innerHTML = '';
   
   timesheetState.weeks.forEach((week, wIdx) => {
     let weekTotal = 0;
@@ -110,24 +114,34 @@ function recalculateTotals() {
     
     periodTotal += weekTotal;
     
-    // Add row to Weekly Summary UI card
-    const weekRow = document.createElement('div');
-    weekRow.className = 'flex justify-between items-center py-1 border-b border-white/5';
-    weekRow.innerHTML = `
-      <span class="text-gray-400 font-bold">Week ${wIdx + 1} Total</span>
-      <span class="text-white font-extrabold">${weekTotal.toFixed(2)} hrs</span>
-    `;
-    weeksStack.appendChild(weekRow);
-    
-    // Also update current active tab total labels if available
+    // Update summary tab value
     const tabEl = document.getElementById(`tab-week-${wIdx}`);
     if (tabEl) {
-      tabEl.innerHTML = `Week ${wIdx + 1} <span class="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-purple-600/30 text-purple-200 border border-purple-500/20">${weekTotal.toFixed(2)}h</span>`;
+      tabEl.querySelector('.tab-hours-badge').innerText = `${weekTotal.toFixed(1)}h`;
+    }
+    
+    // Update summary list cards
+    const summaryVal = document.getElementById(`summary-val-${wIdx}`);
+    if (summaryVal) {
+      summaryVal.innerText = `${weekTotal.toFixed(1)} Hours`;
+    }
+
+    // Update table active week vertical rowspan display if rendering this week
+    if (currentWeekIndex === wIdx) {
+      const vertWeeklyTotalCell = document.getElementById('weekly-total-value-span');
+      if (vertWeeklyTotalCell) {
+        vertWeeklyTotalCell.innerText = weekTotal.toFixed(1);
+      }
+      // Also update week footer total card
+      const weekFooterVal = document.getElementById('week-total-value');
+      if (weekFooterVal) {
+        weekFooterVal.innerText = weekTotal.toFixed(1);
+      }
     }
   });
   
   // Update final period hours
-  document.getElementById('summary-total-hours').innerText = periodTotal.toFixed(2);
+  document.getElementById('summary-total-hours').innerText = `${periodTotal.toFixed(1)} Hours`;
 }
 
 // Date helper: autofill date inputs based on Period Start Date
@@ -135,11 +149,11 @@ function autofillDates() {
   const startVal = document.getElementById('period-start').value;
   if (!startVal) return;
   
-  const baseDate = new Date(startVal + 'T00:00:00'); // avoid timezone shifts
+  const baseDate = new Date(startVal + 'T00:00:00');
   
   timesheetState.weeks.forEach((week, wIdx) => {
     week.forEach((day, dIdx) => {
-      const dayOffset = (wIdx * 7) + dIdx; // 7 calendar days per week
+      const dayOffset = (wIdx * 7) + dIdx;
       const currentDayDate = new Date(baseDate);
       currentDayDate.setDate(baseDate.getDate() + dayOffset);
       
@@ -156,30 +170,40 @@ function autofillDates() {
       }
     });
   });
+
+  // Update Week Start Date input field for active week
+  updateWeekStartDateField();
+  
+  // Update Reporting Period display range
+  updateReportingPeriodDisplay();
 }
 
-// -------------------------------------------------------------
-// Validation Warnings UI
-// -------------------------------------------------------------
-function showValidationError(rowId, message) {
-  const warningContainer = document.getElementById(`warning-${rowId}`);
-  if (warningContainer) {
-    warningContainer.innerHTML = `<i data-lucide="alert-circle" class="h-3.5 w-3.5 text-red-500 shrink-0"></i> ${message}`;
-    warningContainer.classList.remove('hidden');
-    lucide.createIcons();
+function updateWeekStartDateField() {
+  const activeMon = timesheetState.weeks[currentWeekIndex][0];
+  const weekStartInput = document.getElementById('week-start-date');
+  if (weekStartInput && activeMon.date) {
+    weekStartInput.value = activeMon.date;
   }
 }
 
-function clearValidationError(rowId) {
-  const warningContainer = document.getElementById(`warning-${rowId}`);
-  if (warningContainer) {
-    warningContainer.innerHTML = '';
-    warningContainer.classList.add('hidden');
+function updateReportingPeriodDisplay() {
+  const start = document.getElementById('period-start').value;
+  const end = document.getElementById('period-end').value;
+  const display = document.getElementById('reporting-period-display');
+  
+  if (start && end) {
+    const formatDate = (dateStr) => {
+      const [y, m, d] = dateStr.split('-');
+      return `${m}/${d}/${y}`;
+    };
+    display.value = `${formatDate(start)} - ${formatDate(end)}`;
+  } else {
+    display.value = 'MM/DD/YYYY - MM/DD/YYYY';
   }
 }
 
 // -------------------------------------------------------------
-// Rendering timesheet rows and tabs
+// Rendering rows and tabs
 // -------------------------------------------------------------
 
 function renderWeekTabs() {
@@ -187,7 +211,6 @@ function renderWeekTabs() {
   container.innerHTML = '';
   
   timesheetState.weeks.forEach((week, wIdx) => {
-    // calculate current week total
     let weekTotal = 0;
     week.forEach(d => weekTotal += d.hours);
     
@@ -195,14 +218,18 @@ function renderWeekTabs() {
     tabButton.type = 'button';
     tabButton.id = `tab-week-${wIdx}`;
     tabButton.className = `tab-week cursor-pointer ${currentWeekIndex === wIdx ? 'active' : ''}`;
-    tabButton.innerHTML = `Week ${wIdx + 1} <span class="ml-1 text-[9px] px-1.5 py-0.5 rounded bg-purple-600/30 text-purple-200 border border-purple-500/20">${weekTotal.toFixed(2)}h</span>`;
+    tabButton.innerHTML = `Week ${wIdx + 1} <span class="tab-hours-badge ml-1 text-[9px] px-1.5 py-0.5 rounded bg-blue-500/10 text-[#002060] border border-blue-500/20">${weekTotal.toFixed(1)}h</span>`;
     
     tabButton.addEventListener('click', () => {
       currentWeekIndex = wIdx;
-      // update active classes
       document.querySelectorAll('.tab-week').forEach(btn => btn.classList.remove('active'));
       tabButton.classList.add('active');
+      
+      const label = document.getElementById('week-total-label');
+      if (label) label.innerText = `WEEK ${wIdx + 1} TOTAL`;
+      
       renderDailyRows();
+      updateWeekStartDateField();
     });
     
     container.appendChild(tabButton);
@@ -210,87 +237,80 @@ function renderWeekTabs() {
 }
 
 function renderDailyRows() {
-  const container = document.getElementById('timesheet-rows-container');
-  container.innerHTML = '';
+  const tbody = document.getElementById('table-rows-body');
+  tbody.innerHTML = '';
   
   const activeWeekDays = timesheetState.weeks[currentWeekIndex];
   
+  // Calculate current week total for rowspan cell
+  let weekTotal = 0;
+  activeWeekDays.forEach(d => weekTotal += d.hours);
+  
   activeWeekDays.forEach((day, dIdx) => {
-    const rowId = `day-${currentWeekIndex}-${dIdx}`;
+    const tr = document.createElement('tr');
+    tr.className = 'text-center';
     
-    const dayCard = document.createElement('div');
-    dayCard.className = `day-card animate-fade-in ${day.hours > 0 ? 'has-data' : ''}`;
-    dayCard.id = `card-${rowId}`;
-    
-    dayCard.innerHTML = `
-      <!-- Row Header/Hours log -->
-      <div class="day-card-header p-5">
-        <div class="timesheet-grid">
-          <!-- Day & Date -->
-          <div class="flex flex-col sm:flex-row sm:items-center gap-4">
-            <span class="font-display font-black text-lg text-white w-24 shrink-0">${day.dayName}</span>
-            <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="input-dark py-2 text-xs" value="${day.date || ''}">
-          </div>
-
-          <!-- Shift 1 / Shift 2 -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <!-- Period 1 -->
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-[9px] text-gray-500 uppercase font-bold shrink-0">Shift 1</span>
-              <div class="time-pair-grid w-full">
-                <input type="time" class="input-dark py-2 px-2 text-xs text-center" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}">
-                <input type="time" class="input-dark py-2 px-2 text-xs text-center" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}">
-              </div>
-            </div>
-            <!-- Period 2 -->
-            <div class="flex items-center gap-2">
-              <span class="font-mono text-[9px] text-gray-500 uppercase font-bold shrink-0">Shift 2</span>
-              <div class="time-pair-grid w-full">
-                <input type="time" class="input-dark py-2 px-2 text-xs text-center" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}">
-                <input type="time" class="input-dark py-2 px-2 text-xs text-center" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}">
-              </div>
-            </div>
-          </div>
-
-          <!-- Total Daily Calculated Hours -->
-          <div class="flex items-center justify-between lg:justify-center border-t lg:border-t-0 border-white/5 pt-3 lg:pt-0">
-            <span class="lg:hidden label-mono">Daily Total</span>
-            <div class="font-mono text-sm font-bold text-white bg-white/5 border border-white/10 rounded-xl px-4 py-2 min-w-[70px] text-center">
-              <span id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(2)}</span>h
-            </div>
-          </div>
-
-          <!-- Add Session Button -->
-          <div class="flex justify-end pt-3 lg:pt-0">
-            <button type="button" class="btn-secondary py-2.5 px-4 text-[10px] font-mono font-bold uppercase tracking-wider flex items-center gap-1 bg-purple-500/10 border-purple-500/20 text-purple-300 hover:bg-purple-500/20" id="btn-add-session-${currentWeekIndex}-${dIdx}">
-              <i data-lucide="plus-circle" class="h-3.5 w-3.5 text-purple-400"></i> Session
-            </button>
-          </div>
+    // Date & Day column
+    let dateCol = `
+      <td class="py-3 px-3 border-r border-slate-200">
+        <div class="flex flex-col gap-1 items-start">
+          <span class="font-display font-black text-xs text-slate-800">${day.dayName}</span>
+          <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="table-input py-1 text-[11px]" value="${day.date || ''}">
         </div>
-
-        <!-- Validation alert banner -->
-        <div id="warning-${rowId}" class="mt-3 p-3 bg-red-950/20 border border-red-500/20 text-red-400 rounded-xl text-xs flex items-center gap-2 hidden"></div>
-      </div>
-
-      <!-- Nested Tutoring Sessions Panel -->
-      <div id="sessions-panel-${currentWeekIndex}-${dIdx}" class="sessions-panel ${day.sessions.length === 0 ? 'hidden' : ''}">
-        <div class="border-b border-white/5 pb-2 mb-4">
-          <span class="font-mono text-[10px] uppercase text-purple-300 tracking-wider font-extrabold flex items-center gap-1.5">
-            <i data-lucide="users" class="h-4 w-4"></i> Tutoring &amp; Student Sessions (${day.sessions.length})
-          </span>
-        </div>
-        <div id="sessions-list-${currentWeekIndex}-${dIdx}" class="space-y-4">
-          <!-- Dynamically populated student session forms -->
-        </div>
-      </div>
+      </td>
     `;
     
-    container.appendChild(dayCard);
+    // Shift Inputs columns
+    let shiftsCols = `
+      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
+      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
+      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
+      <td class="p-2 border-r border-slate-200"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
+    `;
     
-    // Render tutoring sessions for this day
-    renderSessions(currentWeekIndex, dIdx);
+    // Daily calculated hours column
+    let dailyHrsCol = `
+      <td class="p-2 border-r border-slate-200">
+        <span class="font-mono text-xs font-bold text-slate-800" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
+      </td>
+    `;
     
-    // Wire up events
+    // Vertically merged Weekly Total column (only rendered on Monday dIdx === 0)
+    let weeklyTotalCol = '';
+    if (dIdx === 0) {
+      weeklyTotalCol = `
+        <td class="weekly-total-cell" rowspan="7" id="weekly-total-span-cell">
+          <span id="weekly-total-value-span">${weekTotal.toFixed(1)}</span>
+        </td>
+      `;
+    }
+    
+    // Tutoring Cells
+    let tutoringCols = `
+      <!-- Student Name ID column -->
+      <td class="py-3 px-3 border-r border-slate-200 text-left">
+        <div class="cell-sessions-container" id="cell-student-${currentWeekIndex}-${dIdx}"></div>
+        <button type="button" class="btn-add-session-inline" id="btn-add-session-${currentWeekIndex}-${dIdx}">
+          <i data-lucide="plus-circle" class="h-3 w-3"></i> Add Student Session
+        </button>
+      </td>
+      <!-- Skills Worked On column -->
+      <td class="py-3 px-3 border-r border-slate-200">
+        <div class="cell-sessions-container" id="cell-skills-${currentWeekIndex}-${dIdx}"></div>
+      </td>
+      <!-- Progress Notes column -->
+      <td class="py-3 px-3">
+        <div class="cell-sessions-container" id="cell-notes-${currentWeekIndex}-${dIdx}"></div>
+      </td>
+    `;
+    
+    tr.innerHTML = dateCol + shiftsCols + dailyHrsCol + weeklyTotalCol + tutoringCols;
+    tbody.appendChild(tr);
+    
+    // Render tutoring session lists inside cell containers
+    renderCellSessions(currentWeekIndex, dIdx);
+    
+    // Attach event listeners for row inputs
     setupRowEvents(currentWeekIndex, dIdx);
   });
   
@@ -299,156 +319,120 @@ function renderDailyRows() {
 
 function setupRowEvents(wIdx, dIdx) {
   const day = timesheetState.weeks[wIdx][dIdx];
-  const rowId = `day-${wIdx}-${dIdx}`;
   
-  // Date Event
-  const dateInput = document.getElementById(`date-input-${wIdx}-${dIdx}`);
-  dateInput.addEventListener('change', (e) => {
+  // Date Input Event
+  document.getElementById(`date-input-${wIdx}-${dIdx}`).addEventListener('change', (e) => {
     day.date = e.target.value;
   });
   
-  // Shifts events
-  const shiftsInputs = [`in1-${wIdx}-${dIdx}`, `out1-${wIdx}-${dIdx}`, `in2-${wIdx}-${dIdx}`, `out2-${wIdx}-${dIdx}`];
-  shiftsInputs.forEach(id => {
-    const el = document.getElementById(id);
-    el.addEventListener('change', (e) => {
+  // Shifts Inputs Events
+  const ids = [`in1-${wIdx}-${dIdx}`, `out1-${wIdx}-${dIdx}`, `in2-${wIdx}-${dIdx}`, `out2-${wIdx}-${dIdx}`];
+  ids.forEach(id => {
+    document.getElementById(id).addEventListener('change', (e) => {
       const field = id.split('-')[0];
       day[field] = e.target.value;
       
-      // Calculate
+      // Compute hours
       updateDailyHours(wIdx, dIdx);
       
-      // Refresh display label
-      document.getElementById(`hours-display-${wIdx}-${dIdx}`).innerText = day.hours.toFixed(2);
-      
-      // Highlight card if hours logged
-      const card = document.getElementById(`card-${rowId}`);
-      if (day.hours > 0) {
-        card.classList.add('has-data');
-      } else {
-        card.classList.remove('has-data');
-      }
+      // Update label
+      document.getElementById(`hours-display-${wIdx}-${dIdx}`).innerText = day.hours.toFixed(1);
     });
   });
 
-  // Add Session click handler
+  // Add Session inline click
   document.getElementById(`btn-add-session-${wIdx}-${dIdx}`).addEventListener('click', () => {
-    // Add empty session record
-    day.sessions.push({
-      studentId: '',
-      studentName: '',
-      assignment: '',
-      notes: ''
-    });
-    
-    // Show panel
-    document.getElementById(`sessions-panel-${wIdx}-${dIdx}`).classList.remove('hidden');
-    
-    // Rerender list
-    renderSessions(wIdx, dIdx);
+    day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
+    renderCellSessions(wIdx, dIdx);
   });
 }
 
 // -------------------------------------------------------------
-// Tutoring Sessions Render & Search Dropdown Component
+// Render nested tutoring session lists directly inside cells
 // -------------------------------------------------------------
 
-function renderSessions(wIdx, dIdx) {
-  const listContainer = document.getElementById(`sessions-list-${wIdx}-${dIdx}`);
-  if (!listContainer) return;
+function renderCellSessions(wIdx, dIdx) {
+  const studentCell = document.getElementById(`cell-student-${wIdx}-${dIdx}`);
+  const skillsCell = document.getElementById(`cell-skills-${wIdx}-${dIdx}`);
+  const notesCell = document.getElementById(`cell-notes-${wIdx}-${dIdx}`);
   
-  listContainer.innerHTML = '';
+  if (!studentCell || !skillsCell || !notesCell) return;
+  
+  studentCell.innerHTML = '';
+  skillsCell.innerHTML = '';
+  notesCell.innerHTML = '';
+  
   const day = timesheetState.weeks[wIdx][dIdx];
   
   day.sessions.forEach((session, sIdx) => {
-    const sessionCard = document.createElement('div');
-    sessionCard.className = 'session-row flex flex-col md:flex-row gap-5 items-start justify-between relative';
-    
-    sessionCard.innerHTML = `
-      <!-- Search Dropdown Widget -->
-      <div class="w-full md:w-5/12 space-y-2">
-        <label class="label-mono">Select Student / ID</label>
-        <div class="search-dropdown" id="dropdown-${wIdx}-${dIdx}-${sIdx}">
-          <div class="input-dark dropdown-selected flex items-center justify-between" id="dropdown-select-${wIdx}-${dIdx}-${sIdx}">
-            <span class="dropdown-label text-xs sm:text-sm text-gray-300">
-              ${session.studentName ? `${session.studentName} (${session.studentId})` : 'Search & Select Student...'}
-            </span>
-            <i data-lucide="chevron-down" class="h-4 w-4 text-gray-400"></i>
-          </div>
-          <!-- Dropdown Options List -->
-          <div class="dropdown-list" id="dropdown-list-${wIdx}-${dIdx}-${sIdx}">
-            <input type="text" class="dropdown-search-input" placeholder="Search by name or student ID..." id="dropdown-search-${wIdx}-${dIdx}-${sIdx}">
-            <div class="dropdown-options-container" id="dropdown-options-${wIdx}-${dIdx}-${sIdx}">
-              <!-- Dynamic options -->
-            </div>
-          </div>
+    // 1. Render Student Dropdown slot
+    const dropdownDiv = document.createElement('div');
+    dropdownDiv.className = 'cell-session-row relative';
+    dropdownDiv.innerHTML = `
+      <div class="search-dropdown" id="dropdown-${wIdx}-${dIdx}-${sIdx}">
+        <div class="dropdown-selected text-xs" id="dropdown-select-${wIdx}-${dIdx}-${sIdx}">
+          <span class="dropdown-label truncate">
+            ${session.studentName ? `${session.studentName} (${session.studentId})` : 'Select Student...'}
+          </span>
+          <i data-lucide="chevron-down" class="h-3 w-3 text-slate-400"></i>
+        </div>
+        <div class="dropdown-list" id="dropdown-list-${wIdx}-${dIdx}-${sIdx}">
+          <input type="text" class="dropdown-search-input" placeholder="Search..." id="dropdown-search-${wIdx}-${dIdx}-${sIdx}">
+          <div class="dropdown-options-container" id="dropdown-options-${wIdx}-${dIdx}-${sIdx}"></div>
         </div>
       </div>
-
-      <!-- Skills / Assignments -->
-      <div class="w-full md:w-3/12 space-y-2">
-        <label class="label-mono">Skills / Assignments</label>
-        <input type="text" class="input-dark text-xs py-3" placeholder="e.g. Algebra review, Python lab" value="${session.assignment || ''}" id="assignment-input-${wIdx}-${dIdx}-${sIdx}">
-      </div>
-
-      <!-- Progress Notes -->
-      <div class="w-full md:w-3/12 space-y-2">
-        <label class="label-mono">Progress Notes</label>
-        <textarea class="input-dark text-xs py-2 px-3 h-11 min-h-[44px] resize-y" placeholder="Student made progress on..." id="notes-input-${wIdx}-${dIdx}-${sIdx}">${session.notes || ''}</textarea>
-      </div>
-
-      <!-- Remove button -->
-      <div class="pt-6 shrink-0">
-        <button type="button" class="btn-remove-session" id="btn-remove-${wIdx}-${dIdx}-${sIdx}" title="Remove Session">
-          <i data-lucide="trash-2" class="h-4 w-4"></i>
-        </button>
-      </div>
     `;
+    studentCell.appendChild(dropdownDiv);
     
-    listContainer.appendChild(sessionCard);
-    
-    // Attach custom dropdown widget controller
+    // Initialize searchable selection
     initSearchDropdown(wIdx, dIdx, sIdx, session);
     
-    // Input update events
+    // 2. Render Skills Input slot
+    const skillsDiv = document.createElement('div');
+    skillsDiv.className = 'cell-session-row';
+    skillsDiv.innerHTML = `
+      <input type="text" class="table-input py-2 text-xs" placeholder="Enter skills..." value="${session.assignment || ''}" id="assignment-input-${wIdx}-${dIdx}-${sIdx}">
+    `;
+    skillsCell.appendChild(skillsDiv);
+    
     document.getElementById(`assignment-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
       session.assignment = e.target.value;
     });
+    
+    // 3. Render Notes Textarea slot with Remove Button
+    const notesDiv = document.createElement('div');
+    notesDiv.className = 'cell-session-row pr-6'; // leave space for delete button
+    notesDiv.innerHTML = `
+      <textarea class="table-input py-1.5 px-2 text-xs h-9 min-h-[36px] resize-y leading-tight" placeholder="Enter progress notes..." id="notes-input-${wIdx}-${dIdx}-${sIdx}">${session.notes || ''}</textarea>
+      <button type="button" class="btn-delete-session" id="btn-delete-${wIdx}-${dIdx}-${sIdx}" title="Delete Session">
+        <i data-lucide="x" class="h-3 w-3"></i>
+      </button>
+    `;
+    notesCell.appendChild(notesDiv);
     
     document.getElementById(`notes-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
       session.notes = e.target.value;
     });
 
-    // Remove Session handler
-    document.getElementById(`btn-remove-${wIdx}-${dIdx}-${sIdx}`).addEventListener('click', () => {
+    // Delete Session listener
+    document.getElementById(`btn-delete-${wIdx}-${dIdx}-${sIdx}`).addEventListener('click', () => {
       day.sessions.splice(sIdx, 1);
-      
-      // Hide container if no sessions remaining
-      if (day.sessions.length === 0) {
-        document.getElementById(`sessions-panel-${wIdx}-${dIdx}`).classList.add('hidden');
-      }
-      
-      // Rerender sessions
-      renderSessions(wIdx, dIdx);
+      renderCellSessions(wIdx, dIdx);
     });
   });
   
   lucide.createIcons();
 }
 
-// Search Dropdown controller implementation
 function initSearchDropdown(wIdx, dIdx, sIdx, session) {
   const selectBox = document.getElementById(`dropdown-select-${wIdx}-${dIdx}-${sIdx}`);
   const listEl = document.getElementById(`dropdown-list-${wIdx}-${dIdx}-${sIdx}`);
   const searchInput = document.getElementById(`dropdown-search-${wIdx}-${dIdx}-${sIdx}`);
   const optionsContainer = document.getElementById(`dropdown-options-${wIdx}-${dIdx}-${sIdx}`);
   
-  // Toggle show/hide options list
   selectBox.addEventListener('click', (e) => {
     e.stopPropagation();
     const isHidden = listEl.style.display !== 'block';
-    
-    // Close other open dropdowns
     document.querySelectorAll('.dropdown-list').forEach(el => el.style.display = 'none');
     
     if (isHidden) {
@@ -459,16 +443,12 @@ function initSearchDropdown(wIdx, dIdx, sIdx, session) {
     }
   });
 
-  // Close dropdown on click outside
   document.addEventListener('click', () => {
     listEl.style.display = 'none';
   });
 
-  listEl.addEventListener('click', (e) => {
-    e.stopPropagation(); // prevent closing when interacting inside
-  });
+  listEl.addEventListener('click', (e) => e.stopPropagation());
 
-  // Search filter handler
   searchInput.addEventListener('input', (e) => {
     const val = e.target.value.toLowerCase();
     const filtered = studentDatabase.filter(s =>
@@ -477,29 +457,21 @@ function initSearchDropdown(wIdx, dIdx, sIdx, session) {
     populateOptions(filtered);
   });
 
-  // Populate options helper
   function populateOptions(items) {
     optionsContainer.innerHTML = '';
-    
     if (items.length === 0) {
-      optionsContainer.innerHTML = `<div class="dropdown-option no-results text-xs text-gray-500">No matching student found</div>`;
+      optionsContainer.innerHTML = `<div class="dropdown-option text-[11px] text-gray-400 italic text-center">No results</div>`;
       return;
     }
     
     items.forEach(student => {
       const opt = document.createElement('div');
-      opt.className = 'dropdown-option text-xs text-gray-300';
-      opt.innerHTML = `<strong>${student.name}</strong> <span class="text-gray-500 ml-1">(${student.id})</span>`;
-      
+      opt.className = 'dropdown-option text-left';
+      opt.innerHTML = `<strong>${student.name}</strong> <span class="text-slate-400">(${student.id})</span>`;
       opt.addEventListener('click', () => {
-        // Update model state
         session.studentId = student.id;
         session.studentName = student.name;
-        
-        // Update select label
         selectBox.querySelector('.dropdown-label').innerText = `${student.name} (${student.id})`;
-        
-        // Close dropdown
         listEl.style.display = 'none';
       });
       optionsContainer.appendChild(opt);
@@ -508,91 +480,84 @@ function initSearchDropdown(wIdx, dIdx, sIdx, session) {
 }
 
 // -------------------------------------------------------------
-// HTML5 Digital Signature Pad Handler
+// Digital signature canvas handlers for all three boards
 // -------------------------------------------------------------
-let isDrawing = false;
-let canvas, ctx;
 
-function initSignatureCanvas() {
-  canvas = document.getElementById('signature-canvas');
-  ctx = canvas.getContext('2d');
-  const placeholder = document.getElementById('canvas-placeholder');
+const canvases = {
+  employee: { id: 'canvas-employee', btn: 'btn-clear-employee', pl: 'placeholder-employee', field: 'employee', color: '#002060' },
+  supervisor: { id: 'canvas-supervisor', btn: 'btn-clear-supervisor', pl: 'placeholder-supervisor', field: 'supervisor', color: '#9333EA' },
+  payroll: { id: 'canvas-payroll', btn: 'btn-clear-payroll', pl: 'placeholder-payroll', field: 'payroll', color: '#0D9488' }
+};
 
-  // Set logical coordinate scale to fit physical resolution bounds
-  resizeCanvas();
-  window.addEventListener('resize', resizeCanvas);
-
-  function resizeCanvas() {
-    // Preserve drawn paths by copying layout data during resize
-    const tempCopy = canvas.toDataURL();
+function initSignatures() {
+  Object.keys(canvases).forEach(key => {
+    const cfg = canvases[key];
+    const canvasEl = document.getElementById(cfg.id);
+    const ctx = canvasEl.getContext('2d');
+    const plEl = document.getElementById(cfg.pl);
     
-    canvas.width = canvas.parentElement.offsetWidth;
-    canvas.height = canvas.parentElement.offsetHeight;
+    let isDrawing = false;
     
-    // Clear and restore paths
-    ctx.strokeStyle = '#e3fc51'; // draw in electric lime!
+    // Scale size
+    canvasEl.width = canvasEl.parentElement.offsetWidth;
+    canvasEl.height = canvasEl.parentElement.offsetHeight;
+    
+    ctx.strokeStyle = cfg.color;
     ctx.lineWidth = 2.5;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
-    
-    const img = new Image();
-    img.src = tempCopy;
-    img.onload = () => {
-      ctx.drawImage(img, 0, 0);
-    };
-  }
 
-  // Draw events for Mouse
-  canvas.addEventListener('mousedown', (e) => {
-    isDrawing = true;
-    placeholder.classList.add('hidden');
-    ctx.beginPath();
-    ctx.moveTo(e.offsetX, e.offsetY);
-  });
+    canvasEl.addEventListener('mousedown', (e) => {
+      isDrawing = true;
+      plEl.classList.add('hidden');
+      ctx.beginPath();
+      ctx.moveTo(e.offsetX, e.offsetY);
+    });
 
-  canvas.addEventListener('mousemove', (e) => {
-    if (!isDrawing) return;
-    ctx.lineTo(e.offsetX, e.offsetY);
-    ctx.stroke();
-  });
+    canvasEl.addEventListener('mousemove', (e) => {
+      if (!isDrawing) return;
+      ctx.lineTo(e.offsetX, e.offsetY);
+      ctx.stroke();
+    });
 
-  window.addEventListener('mouseup', () => {
-    if (isDrawing) {
+    window.addEventListener('mouseup', () => {
+      if (isDrawing) {
+        isDrawing = false;
+        timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+      }
+    });
+
+    // Touch
+    canvasEl.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      isDrawing = true;
+      plEl.classList.add('hidden');
+      const touch = e.touches[0];
+      const rect = canvasEl.getBoundingClientRect();
+      ctx.beginPath();
+      ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
+    }, { passive: false });
+
+    canvasEl.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!isDrawing) return;
+      const touch = e.touches[0];
+      const rect = canvasEl.getBoundingClientRect();
+      ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
+      ctx.stroke();
+    }, { passive: false });
+
+    canvasEl.addEventListener('touchend', () => {
       isDrawing = false;
-      timesheetState.signature = canvas.toDataURL();
-    }
-  });
+      timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+    });
 
-  // Touch support for Mobile
-  canvas.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    isDrawing = true;
-    placeholder.classList.add('hidden');
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    ctx.beginPath();
-    ctx.moveTo(touch.clientX - rect.left, touch.clientY - rect.top);
-  }, { passive: false });
-
-  canvas.addEventListener('touchmove', (e) => {
-    e.preventDefault();
-    if (!isDrawing) return;
-    const touch = e.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    ctx.lineTo(touch.clientX - rect.left, touch.clientY - rect.top);
-    ctx.stroke();
-  }, { passive: false });
-
-  canvas.addEventListener('touchend', () => {
-    isDrawing = false;
-    timesheetState.signature = canvas.toDataURL();
-  });
-
-  // Clear Signature click
-  document.getElementById('btn-clear-sig').addEventListener('click', () => {
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    placeholder.classList.remove('hidden');
-    timesheetState.signature = '';
+    // Clear Button
+    document.getElementById(cfg.btn).addEventListener('click', () => {
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+      plEl.classList.remove('hidden');
+      timesheetState.signatures[cfg.field] = '';
+    });
   });
 }
 
@@ -601,108 +566,148 @@ function initSignatureCanvas() {
 // -------------------------------------------------------------
 
 function saveDraft() {
-  // Sync employee info metadata values
   timesheetState.employeeName = document.getElementById('emp-name').value;
   timesheetState.periodStart = document.getElementById('period-start').value;
   timesheetState.periodEnd = document.getElementById('period-end').value;
-  timesheetState.signatureDate = document.getElementById('signature-date').value;
+  
+  timesheetState.signatureDates.employee = document.getElementById('date-employee').value;
+  timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor').value;
+  timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value;
 
-  localStorage.setItem('success_center_timesheet_draft', JSON.stringify(timesheetState));
-  alert('Draft saved successfully to localStorage!');
+  localStorage.setItem('ssc_timesheet_redesign_draft', JSON.stringify(timesheetState));
+  alert('Timesheet draft saved successfully to localStorage!');
 }
 
 function loadDraft() {
-  const data = localStorage.getItem('success_center_timesheet_draft');
+  const data = localStorage.getItem('ssc_timesheet_redesign_draft');
   if (!data) {
-    alert('No saved draft found in this browser.');
+    alert('No saved draft found.');
     return;
   }
   
   try {
-    const parsed = JSON.parse(data);
-    timesheetState = parsed;
+    timesheetState = JSON.parse(data);
     
     // Fill metadata inputs
     document.getElementById('emp-name').value = timesheetState.employeeName || '';
     document.getElementById('period-start').value = timesheetState.periodStart || '';
     document.getElementById('period-end').value = timesheetState.periodEnd || '';
-    document.getElementById('signature-date').value = timesheetState.signatureDate || '';
     
-    // Redraw lists
+    document.getElementById('date-employee').value = timesheetState.signatureDates.employee || '';
+    document.getElementById('date-supervisor').value = timesheetState.signatureDates.supervisor || '';
+    document.getElementById('date-payroll').value = timesheetState.signatureDates.payroll || '';
+    
     currentWeekIndex = 0;
     renderWeekTabs();
     renderDailyRows();
     recalculateTotals();
     
-    // Redraw Signature if present
-    if (timesheetState.signature) {
-      const img = new Image();
-      img.src = timesheetState.signature;
-      img.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0);
-        document.getElementById('canvas-placeholder').classList.add('hidden');
-      };
-    }
+    // Redraw Signatures
+    Object.keys(canvases).forEach(key => {
+      const cfg = canvases[key];
+      const canvasEl = document.getElementById(cfg.id);
+      const ctx = canvasEl.getContext('2d');
+      const sigData = timesheetState.signatures[cfg.field];
+      
+      if (sigData) {
+        const img = new Image();
+        img.src = sigData;
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+          ctx.drawImage(img, 0, 0);
+          document.getElementById(cfg.pl).classList.add('hidden');
+        };
+      }
+    });
     
     alert('Timesheet draft loaded successfully!');
   } catch (err) {
-    alert('Error loading draft details: corrupted JSON.');
+    alert('Error loading draft details.');
   }
 }
 
 // -------------------------------------------------------------
-// Initialize App Hooks
+// App Initialization Setup
 // -------------------------------------------------------------
 
 document.addEventListener('DOMContentLoaded', () => {
-  // Setup Initial State
   initDefaultWeeks();
   renderWeekTabs();
   renderDailyRows();
   recalculateTotals();
-  initSignatureCanvas();
+  initSignatures();
 
-  // Period start input changed -> autofill dates
+  // Period Date Range Autofill Events
   document.getElementById('period-start').addEventListener('change', () => {
     autofillDates();
   });
+  document.getElementById('period-end').addEventListener('change', () => {
+    updateReportingPeriodDisplay();
+  });
 
-  // Buttons Event Listeners
+  // Week Start Date input field changed
+  const weekStartInput = document.getElementById('week-start-date');
+  if (weekStartInput) {
+    weekStartInput.addEventListener('change', (e) => {
+      const startVal = e.target.value;
+      if (!startVal) return;
+      
+      const baseDate = new Date(startVal + 'T00:00:00');
+      const activeWeek = timesheetState.weeks[currentWeekIndex];
+      
+      activeWeek.forEach((day, dIdx) => {
+        const currentDayDate = new Date(baseDate);
+        currentDayDate.setDate(baseDate.getDate() + dIdx);
+        
+        const yyyy = currentDayDate.getFullYear();
+        const mm = String(currentDayDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(currentDayDate.getDate()).padStart(2, '0');
+        
+        day.date = `${yyyy}-${mm}-${dd}`;
+        
+        // Update input
+        const dateInput = document.getElementById(`date-input-${currentWeekIndex}-${dIdx}`);
+        if (dateInput) {
+          dateInput.value = day.date;
+        }
+      });
+    });
+  }
+
+  // Add Week tab click
   document.getElementById('btn-add-week').addEventListener('click', () => {
     timesheetState.weeks.push(createEmptyWeek());
     renderWeekTabs();
     recalculateTotals();
   });
 
+  // Draft triggers
   document.getElementById('btn-save-draft').addEventListener('click', () => {
     saveDraft();
   });
-
   document.getElementById('btn-load-draft').addEventListener('click', () => {
     loadDraft();
   });
 
-  // Form submit handler
+  // Form Submit validation checks
   document.getElementById('timesheet-form').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    // Validations
-    if (!timesheetState.signature) {
-      alert('Required Field Missing: Please sign the digital canvas before submitting.');
+    // Check Employee signature
+    if (!timesheetState.signatures.employee) {
+      alert('Required Field Missing: Please sign the Employee Signature canvas before submitting.');
       return;
     }
     
-    // Verify times validations (Out time preceding In time)
+    // Verify shifts hours validation checks
     let hasValidationError = false;
     timesheetState.weeks.forEach((week, wIdx) => {
       week.forEach((day, dIdx) => {
-        const rowId = `day-${wIdx}-${dIdx}`;
         const p1 = getHoursDiff(day.in1, day.out1);
         const p2 = getHoursDiff(day.in2, day.out2);
         
         if ((day.in1 && !day.out1) || (!day.in1 && day.out1) || (day.in2 && !day.out2) || (!day.in2 && day.out2)) {
-          alert(`Week ${wIdx+1} ${day.dayName}: Complete both In and Out timestamps for logged shifts.`);
+          alert(`Week ${wIdx+1} - ${day.dayNameFull}: Complete both In and Out timestamps for logged shifts.`);
           hasValidationError = true;
         }
       });
@@ -710,20 +715,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasValidationError) return;
 
-    // Trigger lock state
+    // Lock inputs
     timesheetState.isSubmitted = true;
-    
-    // Disable inputs
     document.querySelectorAll('input, select, textarea, button:not(#btn-close-modal)').forEach(el => {
       el.disabled = true;
       el.classList.add('cursor-not-allowed');
     });
-    
-    // Show Success Modal
+
     document.getElementById('modal-success').classList.remove('hidden');
   });
 
-  // Close modal click
   document.getElementById('btn-close-modal').addEventListener('click', () => {
     document.getElementById('modal-success').classList.add('hidden');
   });
