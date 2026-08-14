@@ -54,50 +54,82 @@ body {
   overflow-x: hidden;
 }
 
-/* Soft Animated Blue/Purple Aura */
-body::before,
-body::after {
-  content: '';
+/* Soft Animated Blue/Purple Aura Blobs */
+.aura-blob {
   position: fixed;
   z-index: 0;
   border-radius: 50%;
   pointer-events: none;
-  filter: blur(90px);
-  opacity: 0.6;
+  filter: blur(95px);
+  opacity: 0.72;
+  mix-blend-mode: multiply;
+  transition: var(--transition-smooth);
 }
 
-body::before {
-  width: 650px;
-  height: 650px;
-  top: -12%;
-  left: -8%;
-  background: radial-gradient(circle, rgba(79, 70, 229, 0.35) 0%, rgba(99, 102, 241, 0.15) 45%, transparent 70%);
+/* Blob 1: Top Left (Indigo-Blue) */
+.aura-1 {
+  width: 600px;
+  height: 600px;
+  top: -10%;
+  left: -5%;
+  background: radial-gradient(circle, rgba(79, 70, 229, 0.38) 0%, rgba(99, 102, 241, 0.15) 50%, transparent 70%);
   animation: aura-drift-1 12s ease-in-out infinite alternate;
 }
 
-body::after {
+/* Blob 2: Bottom Right (Vivid Violet) */
+.aura-2 {
   width: 550px;
   height: 550px;
-  bottom: -10%;
-  right: -8%;
-  background: radial-gradient(circle, rgba(124, 58, 237, 0.32) 0%, rgba(139, 92, 246, 0.12) 45%, transparent 70%);
+  bottom: -8%;
+  right: -5%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.42) 0%, rgba(139, 92, 246, 0.18) 50%, transparent 70%);
   animation: aura-drift-2 14s ease-in-out infinite alternate;
+}
+
+/* Blob 3: Middle Right (Vivid Purple-Magenta) */
+.aura-3 {
+  width: 450px;
+  height: 450px;
+  top: 25%;
+  right: -10%;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.38) 0%, rgba(192, 132, 252, 0.15) 50%, transparent 70%);
+  animation: aura-drift-3 16s ease-in-out infinite alternate;
+}
+
+/* Blob 4: Bottom Left (Deep Royal Blue) */
+.aura-4 {
+  width: 500px;
+  height: 500px;
+  bottom: -10%;
+  left: -8%;
+  background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(96, 165, 250, 0.12) 50%, transparent 70%);
+  animation: aura-drift-4 18s ease-in-out infinite alternate;
 }
 
 @keyframes aura-drift-1 {
   0%   { transform: translate(0, 0) scale(1); }
-  25%  { transform: translate(80px, 30px) scale(1.06); }
-  50%  { transform: translate(40px, 70px) scale(1.12); }
-  75%  { transform: translate(-20px, 50px) scale(1.04); }
-  100% { transform: translate(-50px, 80px) scale(0.95); }
+  33%  { transform: translate(70px, 40px) scale(1.08); }
+  66%  { transform: translate(-30px, 80px) scale(0.94); }
+  100% { transform: translate(40px, -20px) scale(1.05); }
 }
 
 @keyframes aura-drift-2 {
   0%   { transform: translate(0, 0) scale(1); }
-  25%  { transform: translate(-60px, -20px) scale(1.08); }
-  50%  { transform: translate(-30px, -60px) scale(1.14); }
-  75%  { transform: translate(30px, -40px) scale(1.02); }
-  100% { transform: translate(60px, -70px) scale(0.96); }
+  33%  { transform: translate(-60px, -40px) scale(1.1); }
+  66%  { transform: translate(40px, -70px) scale(0.95); }
+  100% { transform: translate(-30px, 30px) scale(1.04); }
+}
+
+@keyframes aura-drift-3 {
+  0%   { transform: translate(0, 0) scale(1.02); }
+  50%  { transform: translate(-50px, 60px) scale(0.92); }
+  100% { transform: translate(60px, -40px) scale(1.1); }
+}
+
+@keyframes aura-drift-4 {
+  0%   { transform: translate(0, 0) scale(0.95); }
+  50%  { transform: translate(80px, -50px) scale(1.08); }
+  100% { transform: translate(-40px, 40px) scale(1.0); }
 }
 
 /* Main container */
