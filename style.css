@@ -85,8 +85,9 @@ body {
 }
 
 @media (min-width: 768px) {
-  .md\:grid-cols-6 { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .md\:col-span-5 { grid-column: span 5 / span 5; }
+  .md\:grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  .md\:col-span-9 { grid-column: span 9 / span 9; }
+  .md\:col-span-3 { grid-column: span 3 / span 3; }
 }
 
 @media (min-width: 1024px) {
@@ -99,6 +100,15 @@ body {
   .lg\:pt-0 { padding-top: 0; }
   .lg\:justify-center { justify-content: center; }
 }
+
+/* Positioning & Display Utilities */
+.relative { position: relative; }
+.absolute { position: absolute; }
+.inset-0 { top: 0; right: 0; bottom: 0; left: 0; }
+.pointer-events-none { pointer-events: none; }
+.overflow-hidden { overflow: hidden; }
+.object-contain { object-fit: contain; }
+.opacity-15 { opacity: 0.15; }
 
 /* Sizing Utilities */
 .w-16 { width: 4rem; }
