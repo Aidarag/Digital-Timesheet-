@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Success Center Digital Timesheet | Livingstone College</title>
+  <!-- Google Fonts: Outfit (Display), Inter (Body), JetBrains Mono (Numbers/Code) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Main Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-obsidian text-slate-100 min-h-screen relative overflow-x-hidden">
+  
+  <!-- Glowing spots background -->
+  <div class="glowing-spot bg-purple-600/10 blur-[130px] w-96 h-96 top-10 left-10 rounded-full absolute pointer-events-none z-0"></div>
+  <div class="glowing-spot bg-lime-500/5 blur-[130px] w-96 h-96 bottom-10 right-10 rounded-full absolute pointer-events-none z-0"></div>
+  <div class="absolute inset-0 grid-pattern opacity-20 pointer-events-none z-0"></div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 py-8 sm:py-12">
+    
+    <!-- Header Scaffolding -->
+    <header class="mb-10 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-6 border-b border-white/10 pb-8">
+      <div class="space-y-2">
+        <div class="inline-flex items-center gap-2 rounded-full glass-pill px-4 py-1.5 text-xs text-purple-300 font-mono border border-purple-500/20">
+          <i data-lucide="clock" class="h-3.5 w-3.5"></i> Digital Timesheet Console
+        </div>
+        <h1 class="font-display text-3xl sm:text-4xl md:text-5xl font-black text-white leading-tight tracking-tight uppercase">
+          Student Success <span class="text-gradient-lime">Center</span>
+        </h1>
+        <p class="font-sans text-sm sm:text-base text-gray-400 max-w-xl">
+          Digitized tutor hours log and session records. Record your hourly shifts and student tutoring outputs in one consolidated dashboard.
+        </p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="btn-load-draft" class="btn-secondary flex items-center gap-2">
+          <i data-lucide="folder-open" class="h-4 w-4"></i> Load Draft
+        </button>
+        <span class="font-mono text-[10px] bg-white/5 border border-white/10 px-3.5 py-2 rounded-full text-purple-200 uppercase tracking-widest font-bold">
+          Phase 1 Active
+        </span>
+      </div>
+    </header>
+
+    <!-- Timesheet Main Form -->
+    <form id="timesheet-form" class="space-y-8">
+      
+      <!-- Employee Info Section (Glass Card) -->
+      <section class="glass-card p-6 sm:p-8 space-y-6">
+        <div class="border-b border-white/5 pb-4 flex items-center gap-3">
+          <div class="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+            <i data-lucide="user" class="h-5 w-5"></i>
+          </div>
+          <div>
+            <h2 class="font-display text-lg sm:text-xl font-bold text-white uppercase tracking-wider">Employee Information</h2>
+            <p class="font-sans text-xs text-gray-400">Complete your personal and department details before logging hours.</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <!-- Employee Name -->
+          <div class="space-y-2">
+            <label for="emp-name" class="label-mono">Employee Name</label>
+            <input type="text" id="emp-name" required class="input-dark" placeholder="e.g. John Doe">
+          </div>
+          <!-- Department -->
+          <div class="space-y-2">
+            <label for="emp-dept" class="label-mono">Department Name</label>
+            <input type="text" id="emp-dept" readonly value="Student Success Center" class="input-dark bg-white/5 text-gray-400 border-white/5 cursor-not-allowed">
+          </div>
+          <!-- Beginning Date -->
+          <div class="space-y-2">
+            <label for="period-start" class="label-mono">Beginning Date</label>
+            <input type="date" id="period-start" required class="input-dark">
+          </div>
+          <!-- Ending Date -->
+          <div class="space-y-2">
+            <label for="period-end" class="label-mono">Ending Date</label>
+            <input type="date" id="period-end" required class="input-dark">
+          </div>
+        </div>
+      </section>
+
+      <!-- Timesheet Grid Section -->
+      <section class="space-y-6">
+        
+        <!-- Week Selection Tabs -->
+        <div class="flex flex-wrap items-center justify-between gap-4 border-b border-white/10 pb-4">
+          <div id="week-tabs-container" class="flex flex-wrap gap-2">
+            <!-- Dynamically populated week buttons -->
+          </div>
+          <button type="button" id="btn-add-week" class="btn-secondary py-2 px-4 text-xs font-mono font-bold flex items-center gap-1.5">
+            <i data-lucide="plus" class="h-3.5 w-3.5"></i> Add Week
+          </button>
+        </div>
+
+        <!-- Weekly Daily Rows Container -->
+        <div id="timesheet-rows-container" class="space-y-5">
+          <!-- Dynamically populated daily timesheet cards -->
+        </div>
+
+      </section>
+
+      <!-- Summary & Review Section (Bento Box style) -->
+      <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Left: Signature Canvas Pad (7 cols) -->
+        <div class="lg:col-span-7 glass-card p-6 sm:p-8 flex flex-col justify-between space-y-6">
+          <div class="space-y-1">
+            <h3 class="font-display text-lg sm:text-xl font-bold text-white uppercase tracking-wider flex items-center gap-2">
+              <i data-lucide="pen-tool" class="h-5 w-5 text-purple-400"></i> Digital Signature &amp; Submit
+            </h3>
+            <p class="font-sans text-xs text-gray-400">Sign in the canvas box below to digitally authorize this timesheet reporting period.</p>
+          </div>
+
+          <!-- Canvas Draw Area -->
+          <div class="space-y-3">
+            <div class="relative bg-[#07030E] border border-white/10 rounded-2xl overflow-hidden h-40 w-full shadow-inner flex items-center justify-center cursor-crosshair">
+              <canvas id="signature-canvas" class="absolute inset-0 w-full h-full"></canvas>
+              <div id="canvas-placeholder" class="pointer-events-none font-mono text-xs text-gray-600 flex flex-col items-center gap-1.5">
+                <i data-lucide="edit-3" class="h-5 w-5"></i>
+                <span>Use Mouse/Touch to Draw Signature</span>
+              </div>
+            </div>
+            <div class="flex items-center justify-between gap-4">
+              <button type="button" id="btn-clear-sig" class="py-1.5 px-3 border border-white/10 hover:border-red-500/40 text-gray-400 hover:text-red-400 rounded-lg text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer">
+                <i data-lucide="trash-2" class="h-3.5 w-3.5"></i> Clear Signature
+              </button>
+              <div class="flex items-center gap-2 text-xs">
+                <label for="signature-date" class="label-mono mb-0 text-gray-400 shrink-0">Date Signed:</label>
+                <input type="date" id="signature-date" required class="input-dark py-1.5 text-xs">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Auto-Calculated Summary Panel (5 cols) -->
+        <div class="lg:col-span-5 bg-gradient-to-b from-purple-950/20 via-[#100624]/20 to-[#07030E] border border-purple-500/25 rounded-3xl p-6 sm:p-8 flex flex-col justify-between h-full shadow-2xl relative overflow-hidden">
+          <div class="absolute inset-0 grid-pattern opacity-10 pointer-events-none z-0"></div>
+          <div class="relative z-10 space-y-5">
+            <h3 class="font-display text-lg sm:text-xl font-bold text-white uppercase tracking-wider flex items-center gap-2 border-b border-white/10 pb-4">
+              <i data-lucide="bar-chart-3" class="h-5 w-5 text-[#e3fc51]"></i> Hours Summary
+            </h3>
+
+            <!-- Weekly summaries stack -->
+            <div id="summary-weeks-stack" class="space-y-2.5 font-mono text-xs text-gray-300">
+              <!-- Dynamically populated list of weekly totals -->
+            </div>
+          </div>
+
+          <!-- Total display -->
+          <div class="relative z-10 pt-6 mt-6 border-t border-purple-500/20 flex items-end justify-between">
+            <div>
+              <span class="font-mono text-xs text-purple-300 block uppercase tracking-wider font-semibold">Total Period Hours</span>
+              <span id="summary-total-hours" class="font-display text-4xl sm:text-5xl font-black text-[#e3fc51] tracking-tight block mt-1">
+                0.00
+              </span>
+            </div>
+            <span class="inline-flex items-center gap-1 bg-[#e3fc51]/10 border border-[#e3fc51]/30 text-[#e3fc51] px-3.5 py-1.5 rounded-full font-mono text-[10px] font-black uppercase tracking-wider">
+              <i data-lucide="award" class="h-3.5 w-3.5 animate-pulse"></i> Auto Calculated
+            </span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Action Buttons Footer -->
+      <footer class="pt-6 border-t border-white/10 flex flex-col sm:flex-row items-center justify-end gap-4">
+        <button type="button" id="btn-save-draft" class="btn-secondary w-full sm:w-auto flex items-center justify-center gap-2">
+          <i data-lucide="save" class="h-4 w-4"></i> Save Draft
+        </button>
+        <button type="submit" id="btn-submit" class="btn-primary w-full sm:w-auto flex items-center justify-center gap-2">
+          Submit Timesheet <i data-lucide="send" class="h-4 w-4"></i>
+        </button>
+      </footer>
+
+    </form>
+
+  </div>
+
+  <!-- Submission Confirmation Modal -->
+  <div id="modal-success" class="fixed inset-0 z-50 flex items-center justify-center p-4 hidden">
+    <!-- Modal Backdrop -->
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-md"></div>
+    <!-- Modal Body -->
+    <div class="relative z-10 glass-card bg-gradient-to-b from-[#180A2E] to-[#0A0515] border border-lime-500/30 max-w-md w-full p-8 text-center space-y-6 shadow-2xl rounded-3xl">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-lime-500/10 border border-lime-500/30 text-lime-400 shadow-lg animate-bounce">
+        <i data-lucide="check-circle" class="h-7 w-7"></i>
+      </div>
+      <div class="space-y-2">
+        <h3 class="font-display text-2xl font-black text-white uppercase tracking-wider">Timesheet Submitted!</h3>
+        <p class="font-sans text-sm text-gray-400 leading-relaxed">
+          Your Success Center Digital Timesheet has been successfully authorized and logged. The document is now locked for review.
+        </p>
+      </div>
+      <div class="bg-white/5 border border-white/10 p-4 rounded-2xl font-mono text-xs text-purple-200">
+        Receipt Signature Verified. <br>
+        Response registered with administration database.
+      </div>
+      <div>
+        <button type="button" id="btn-close-modal" class="btn-primary w-full py-3.5 font-mono text-xs uppercase tracking-widest text-[#0B051D]">
+          Close Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Script logic -->
+  <script src="app.js"></script>
+</body>
+</html>
