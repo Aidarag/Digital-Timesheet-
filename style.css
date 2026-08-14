@@ -916,76 +916,110 @@ textarea.table-input {
     padding: 0.75rem 1rem;
   }
 
-  /* Table Cards Transformation */
-  .table-card { overflow: visible; }
-
-  table { display: block; border: none; background: transparent; }
-  thead { display: none; }
-  tbody { display: block; background: transparent; }
-
-  tr {
-    display: block;
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    border: 1px solid var(--glass-border);
-    border-radius: 16px;
-    padding: 1rem;
-    margin-bottom: 1rem;
-    text-align: center;
+  /* Compact Table formatting on Mobile */
+  .table-card {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  td {
-    display: block;
-    width: 100%;
-    border: none;
-    border-bottom: 1px dashed rgba(226, 232, 240, 0.6);
-    padding: 0.5rem 0;
-    text-align: center;
-    background: transparent;
+  #timesheet-table {
+    display: table !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
   }
 
-  td:last-child { border-bottom: none; }
-
-  td::before {
-    content: attr(data-label);
-    display: block;
-    font-family: var(--font-mono);
-    font-size: 9px;
-    font-weight: 800;
-    text-transform: uppercase;
-    color: var(--text-medium);
-    letter-spacing: 0.05em;
-    margin-bottom: 0.25rem;
-    text-align: center;
+  #timesheet-table thead {
+    display: table-header-group !important;
   }
 
-  .table-input {
-    max-width: 220px;
-    margin: 0 auto;
-    display: block;
-    text-align: center;
+  #timesheet-table tbody {
+    display: table-row-group !important;
   }
 
-  td[data-label="Date"]::before { display: none; }
-  td[data-label="Date"] .flex {
-    flex-direction: column;
-    align-items: center;
-    gap: 0.375rem;
+  #timesheet-table tr {
+    display: table-row !important;
+    background: transparent !important;
+    border-radius: 0 !important;
+    padding: 0 !important;
+    margin-bottom: 0 !important;
   }
 
-  td[data-label="Student Sessions"]::before,
-  td[data-label="Skills"]::before,
-  td[data-label="Notes"]::before {
-    position: static;
-    display: block;
-    margin-bottom: 0.375rem;
+  #timesheet-table th, 
+  #timesheet-table td {
+    display: table-cell !important;
+    width: auto !important;
+    padding: 4px 2px !important;
+    font-size: 8px !important;
+    border-bottom: 1px solid var(--color-border) !important;
+    border-right: 1px solid var(--color-border) !important;
+    text-align: center !important;
+    vertical-align: middle !important;
   }
 
-  td[data-label="Student Sessions"],
-  td[data-label="Skills"],
-  td[data-label="Notes"] {
-    text-align: center;
+  #timesheet-table th {
+    padding: 6px 2px !important;
+  }
+
+  #timesheet-table td::before {
+    display: none !important;
+  }
+
+  /* Set fixed column widths for mobile to ensure it fits the viewport */
+  #timesheet-table th:nth-child(1), #timesheet-table td:nth-child(1) { width: 55px !important; } /* Date */
+  #timesheet-table th:nth-child(2), #timesheet-table td:nth-child(2) { width: 75px !important; } /* Student */
+  #timesheet-table th:nth-child(3), #timesheet-table td:nth-child(3) { width: 75px !important; } /* Skills */
+  #timesheet-table th:nth-child(4), #timesheet-table td:nth-child(4) { width: 42px !important; } /* In */
+  #timesheet-table th:nth-child(5), #timesheet-table td:nth-child(5) { width: 42px !important; } /* Out */
+  #timesheet-table th:nth-child(6), #timesheet-table td:nth-child(6) { width: 42px !important; } /* In 2nd */
+  #timesheet-table th:nth-child(7), #timesheet-table td:nth-child(7) { width: 42px !important; } /* Out 2nd */
+  #timesheet-table th:nth-child(8), #timesheet-table td:nth-child(8) { width: 35px !important; } /* Hours */
+  #timesheet-table th:nth-child(9), #timesheet-table td:nth-child(9) { width: 75px !important; } /* Notes */
+
+  #timesheet-table .table-input {
+    font-size: 8px !important;
+    padding: 2px 4px !important;
+    height: 20px !important;
+    border-radius: 4px !important;
+    width: 100% !important;
+    max-width: none !important;
+    text-align: center !important;
+  }
+
+  #timesheet-table select.table-input {
+    padding-right: 12px !important;
+    background-position: right 4px center !important;
+    background-size: 8px !important;
+  }
+
+  #timesheet-table textarea.table-input {
+    height: 20px !important;
+    min-height: 20px !important;
+    padding: 2px 4px !important;
+  }
+
+  #timesheet-table .btn-add-session-inline {
+    padding: 2px 4px !important;
+    font-size: 7px !important;
+    margin-top: 2px !important;
+  }
+
+  #timesheet-table .btn-delete-session {
+    right: -2px !important;
+    padding: 1px !important;
+  }
+
+  #timesheet-table .dropdown-selected {
+    padding: 2px 4px !important;
+    font-size: 8px !important;
+    border-radius: 4px !important;
+  }
+
+  /* Date inputs flex box column adjustment */
+  #timesheet-table td[data-label="Date"] .flex {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 1px !important;
   }
 
   .bottom-row {
