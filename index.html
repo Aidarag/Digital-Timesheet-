@@ -62,7 +62,7 @@
   <!-- 01 — TOP NAVIGATION BAR -->
   <nav class="top-nav">
     <div class="nav-brand">
-      <img src="logo-192.png" alt="Digital Timesheet Logo" style="height: 3rem; width: auto; object-fit: contain; display: block;">
+      <img src="logo-192.png" alt="Digital Timesheet Logo" style="height: 3.2rem; width: auto; object-fit: contain; display: block;">
       <div class="nav-brand-text">
         <h1>Success Center</h1>
         <span>Digital Timesheet</span>
@@ -82,32 +82,26 @@
 
     <form id="timesheet-form">
 
-      <!-- 03 — EMPLOYEE INFO + REPORTING PERIOD (Two Glass Cards) -->
+      <!-- 03 — TUTOR INFO + REPORTING PERIOD (Two Glass Cards) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4" style="margin-bottom: 1.5rem;">
 
-        <!-- Employee Information Card -->
+        <!-- Tutor Information Card -->
         <div class="glass-card" style="padding: 1.5rem;">
           <div class="section-label">
-            <i data-lucide="user"></i> Employee Information
+            <i data-lucide="user"></i> Tutor Information
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Employee Name</label>
-              <input type="text" id="emp-name" required placeholder="Enter employee name..." class="input-flat">
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Tutor Name</label>
+              <input type="text" id="emp-name" required placeholder="Enter tutor name..." class="input-flat">
             </div>
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Employee ID</label>
-              <input type="text" id="emp-id" placeholder="LC-XXXX" class="input-flat">
+              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Tutor ID</label>
+              <input type="text" id="emp-id" placeholder="XXX-XXX-XXX" class="input-flat">
             </div>
             <div>
               <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Position</label>
-              <select id="emp-position" class="input-flat">
-                <option value="">Select position...</option>
-                <option value="Tutor">Tutor</option>
-                <option value="Senior Tutor">Senior Tutor</option>
-                <option value="Lab Assistant">Lab Assistant</option>
-                <option value="Mentor">Mentor</option>
-              </select>
+              <input type="text" id="emp-position" readonly value="Tutor" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
             </div>
             <div>
               <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Department</label>
@@ -145,9 +139,6 @@
           <div class="flex items-center gap-2">
             <button type="button" id="btn-add-week" class="btn-secondary" style="padding: 6px 14px; font-size: 10px;">
               <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Week
-            </button>
-            <button type="button" id="btn-add-session-global" class="btn-primary" style="padding: 6px 14px; font-size: 10px;">
-              <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Student Session
             </button>
           </div>
         </div>
@@ -201,10 +192,10 @@
           </div>
         </div>
 
-        <!-- Employee Signature -->
+        <!-- Tutor Signature -->
         <div class="glass-card sig-card">
           <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
-            <i data-lucide="edit-3"></i> Employee Signature
+            <i data-lucide="edit-3"></i> Tutor Signature
           </div>
           <div class="sig-canvas-wrap cursor-crosshair">
             <canvas id="canvas-employee"></canvas>
@@ -304,54 +295,7 @@
   </div>
 
   <!-- PRINT-ONLY LAYOUT -->
-  <div id="print-layout">
-    <div class="print-header">
-      <img src="livingstone_seal.png" alt="Livingstone College Logo" class="print-logo">
-      <div class="print-title-block">
-        <h1>LIVINGSTONE COLLEGE</h1>
-        <h2>SUCCESS CENTER - MONTHLY TIMESHEET</h2>
-      </div>
-    </div>
-    <div class="print-meta-grid">
-      <div><strong>Employee Name:</strong> <span id="print-emp-name">N/A</span></div>
-      <div><strong>Department:</strong> Academic Support Center</div>
-      <div><strong>Beginning Date:</strong> <span id="print-period-start">N/A</span></div>
-      <div><strong>Ending Date:</strong> <span id="print-period-end">N/A</span></div>
-    </div>
-    <div class="print-section-title">WEEKLY HOUR SUMMARY</div>
-    <table class="print-summary-table">
-      <thead><tr><th>Week 1</th><th>Week 2</th><th>Week 3</th><th>Week 4</th><th>Week 5</th><th>Total Hours</th></tr></thead>
-      <tbody><tr>
-        <td id="print-w1">0.0</td><td id="print-w2">0.0</td><td id="print-w3">0.0</td><td id="print-w4">0.0</td><td id="print-w5">0.0</td>
-        <td style="font-weight: bold;" id="print-total">0.0</td>
-      </tr></tbody>
-    </table>
-    <div class="print-section-title">DETAILED DAILY LOGS & TUTORING SESSIONS</div>
-    <table class="print-details-table">
-      <thead><tr>
-        <th style="width: 15%;">Date</th><th style="width: 25%;">Shift 1 (In/Out)</th><th style="width: 25%;">Shift 2 (In/Out)</th>
-        <th style="width: 12%;">Daily Hours</th><th style="width: 23%;">Tutoring Sessions & Progress Notes</th>
-      </tr></thead>
-      <tbody id="print-details-body"></tbody>
-    </table>
-    <div class="print-signatures-grid">
-      <div class="print-sig-box">
-        <div class="print-sig-line"><img id="print-sig-img-employee" src="" alt="Employee Signature" class="print-sig-img"></div>
-        <div class="print-sig-label">Employee Signature</div>
-        <div class="print-sig-date">Date: <span id="print-sig-date-employee">N/A</span></div>
-      </div>
-      <div class="print-sig-box">
-        <div class="print-sig-line"><img id="print-sig-img-supervisor" src="" alt="Supervisor Signature" class="print-sig-img"></div>
-        <div class="print-sig-label">Supervisor Signature</div>
-        <div class="print-sig-date">Date: <span id="print-sig-date-supervisor">N/A</span></div>
-      </div>
-      <div class="print-sig-box">
-        <div class="print-sig-line"><img id="print-sig-img-payroll" src="" alt="Payroll Signature" class="print-sig-img"></div>
-        <div class="print-sig-label">Payroll Signature</div>
-        <div class="print-sig-date">Date: <span id="print-sig-date-payroll">N/A</span></div>
-      </div>
-    </div>
-  </div>
+  <div id="print-layout"></div>
 
   <script src="app.js"></script>
 </body>

@@ -473,6 +473,7 @@ function initSignatures() {
 
 function saveDraft() {
   timesheetState.employeeName = document.getElementById('emp-name').value;
+  timesheetState.tutorId = document.getElementById('emp-id').value;
   timesheetState.periodStart = document.getElementById('period-start').value;
   timesheetState.periodEnd = document.getElementById('period-end').value;
   
@@ -496,6 +497,7 @@ function loadDraft() {
     
     // Fill metadata inputs
     document.getElementById('emp-name').value = timesheetState.employeeName || '';
+    document.getElementById('emp-id').value = timesheetState.tutorId || '';
     document.getElementById('period-start').value = timesheetState.periodStart || '';
     document.getElementById('period-end').value = timesheetState.periodEnd || '';
     
@@ -569,16 +571,15 @@ document.addEventListener('DOMContentLoaded', () => {
     recalculateTotals();
   });
 
-  // Global "Add Student Session" buttons — add a session to the first day of the active week
-  const addSessionGlobal = document.getElementById('btn-add-session-global');
+  // Add Student Session button at the bottom of the table
   const addSessionTable = document.getElementById('btn-add-session-table');
-  const addSessionHandler = () => {
-    const day = timesheetState.weeks[currentWeekIndex][0];
-    day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
-    renderCellSessions(currentWeekIndex, 0);
-  };
-  if (addSessionGlobal) addSessionGlobal.addEventListener('click', addSessionHandler);
-  if (addSessionTable) addSessionTable.addEventListener('click', addSessionHandler);
+  if (addSessionTable) {
+    addSessionTable.addEventListener('click', () => {
+      const day = timesheetState.weeks[currentWeekIndex][0];
+      day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
+      renderCellSessions(currentWeekIndex, 0);
+    });
+  }
 
   // Footer Download PDF button
   const pdfFooterBtn = document.getElementById('btn-download-pdf-footer');
@@ -595,7 +596,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper to format and open Outlook mailto compose draft
   function sendTimesheetEmail() {
-    const employeeName = document.getElementById('emp-name').value || 'Employee';
+    const employeeName = document.getElementById('emp-name').value || 'Tutor';
+    const tutorId = document.getElementById('emp-id').value || 'N/A';
+    const position = document.getElementById('emp-position').value || 'Tutor';
     const department = document.getElementById('emp-dept').value || 'Academic Support Center';
     const startPeriod = document.getElementById('period-start').value || 'N/A';
     const endPeriod = document.getElementById('period-end').value || 'N/A';
@@ -621,8 +624,10 @@ document.addEventListener('DOMContentLoaded', () => {
     let body = `LIVINGSTONE COLLEGE - TUTOR TIMESHEET\n`;
     body += `MONTHLY TIMESHEET SUBMISSION\n`;
     body += `==============================================\n\n`;
-    body += `EMPLOYEE DETAILS:\n`;
+    body += `TUTOR DETAILS:\n`;
     body += `- Name: ${employeeName}\n`;
+    body += `- Tutor ID: ${tutorId}\n`;
+    body += `- Position: ${position}\n`;
     body += `- Department: ${department}\n`;
     body += `- Reporting Period: ${startPeriod} to ${endPeriod}\n\n`;
     
@@ -667,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     body += `\n==============================================\n`;
     body += `SIGNATURE METADATA:\n`;
-    body += `- Employee Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.employee || 'N/A'})\n`;
+    body += `- Tutor Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.employee || 'N/A'})\n`;
     if (timesheetState.signatures.supervisor) {
       body += `- Supervisor Signature: SIGNED (Authorized Date: ${timesheetState.signatureDates.supervisor || 'N/A'})\n`;
     }
@@ -687,9 +692,9 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('timesheet-form').addEventListener('submit', (e) => {
     e.preventDefault();
     
-    // Check Employee signature
+    // Check Tutor signature
     if (!timesheetState.signatures.employee) {
-      alert('Required Field Missing: Please sign the Employee Signature canvas before submitting.');
+      alert('Required Field Missing: Please sign the Tutor Signature canvas before submitting.');
       return;
     }
     
@@ -731,106 +736,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Print PDF Generator
   function generateTimesheetPDF() {
-    const employeeName = document.getElementById('emp-name').value || 'Employee';
-    const startPeriod = document.getElementById('period-start').value || 'N/A';
-    const endPeriod = document.getElementById('period-end').value || 'N/A';
-
-    // Populate meta
-    document.getElementById('print-emp-name').textContent = employeeName;
-    document.getElementById('print-period-start').textContent = startPeriod;
-    document.getElementById('print-period-end').textContent = endPeriod;
-
-    // Calculate weekly sums
-    let weekTotals = [0, 0, 0, 0, 0];
-    let grandTotal = 0;
-    timesheetState.weeks.forEach((week, wIdx) => {
-      let weekSum = 0;
-      week.forEach(day => {
-        const p1 = getHoursDiff(day.in1, day.out1);
-        const p2 = getHoursDiff(day.in2, day.out2);
-        weekSum += (p1 + p2);
-      });
-      weekTotals[wIdx] = weekSum;
-      grandTotal += weekSum;
-      document.getElementById(`print-w${wIdx + 1}`).textContent = weekSum.toFixed(1);
-    });
-    document.getElementById('print-total').textContent = grandTotal.toFixed(1);
-
-    // Compile detailed list
-    const tbody = document.getElementById('print-details-body');
-    tbody.innerHTML = '';
-
-    timesheetState.weeks.forEach((week, wIdx) => {
-      week.forEach(day => {
-        const p1 = getHoursDiff(day.in1, day.out1);
-        const p2 = getHoursDiff(day.in2, day.out2);
-        const totalHours = p1 + p2;
-        const hasSessions = day.sessions && day.sessions.length > 0;
-
-        // Only display days that have logged shifts or sessions
-        if (totalHours > 0 || hasSessions) {
-          const tr = document.createElement('tr');
-          
-          // Format sessions text
-          let sessionsText = 'No sessions logged';
-          if (hasSessions) {
-            sessionsText = day.sessions.map(s => {
-              return `• ${s.studentName}\n  Skills: ${s.assignment || ''}\n  Notes: ${s.notes || ''}`;
-            }).join('\n\n');
-          }
-
-          tr.innerHTML = `
-            <td style="font-weight: bold; white-space: nowrap;">${day.dayNameFull}<br><span style="font-size: 8px; font-weight: normal; color: #475569;">${day.dateVal || 'N/A'}</span></td>
-            <td>${day.in1 ? `${day.in1} - ${day.out1}` : '--'}</td>
-            <td>${day.in2 ? `${day.in2} - ${day.out2}` : '--'}</td>
-            <td style="font-weight: bold;">${totalHours.toFixed(1)}</td>
-            <td style="white-space: pre-line; font-size: 9px; line-height: 1.3;">${sessionsText}</td>
-          `;
-          tbody.appendChild(tr);
-        }
-      });
-    });
-
-    if (tbody.children.length === 0) {
-      const tr = document.createElement('tr');
-      tr.innerHTML = `<td colspan="5" style="text-align: center; color: #94a3b8; font-style: italic;">No shifts or tutoring sessions logged during this period.</td>`;
-      tbody.appendChild(tr);
-    }
-
-    // Transfer signatures
-    transferSignatureToImg('canvas-employee', 'print-sig-img-employee');
-    transferSignatureToImg('canvas-supervisor', 'print-sig-img-supervisor');
-    transferSignatureToImg('canvas-payroll', 'print-sig-img-payroll');
-
-    // Populate signature dates
-    document.getElementById('print-sig-date-employee').textContent = timesheetState.signatureDates.employee || 'N/A';
-    document.getElementById('print-sig-date-supervisor').textContent = timesheetState.signatureDates.supervisor || 'N/A';
-    document.getElementById('print-sig-date-payroll').textContent = timesheetState.signatureDates.payroll || 'N/A';
-
-    // Trigger print view
     window.print();
-  }
-
-  function transferSignatureToImg(canvasId, imgId) {
-    const canvas = document.getElementById(canvasId);
-    const img = document.getElementById(imgId);
-    if (canvas && img) {
-      // Check if canvas is drawn on (not completely blank/empty)
-      const isBlank = isCanvasBlank(canvas);
-      if (!isBlank) {
-        img.src = canvas.toDataURL();
-        img.style.display = 'block';
-      } else {
-        img.src = '';
-        img.style.display = 'none';
-      }
-    }
-  }
-
-  function isCanvasBlank(canvas) {
-    const blank = document.createElement('canvas');
-    blank.width = canvas.width;
-    blank.height = canvas.height;
-    return canvas.toDataURL() === blank.toDataURL();
   }
 });
