@@ -45,9 +45,10 @@ function createEmptyWeek() {
       in2: '',
       out2: '',
       hours: 0.00,
-      sessions: [
-        { studentId: '', studentName: '', assignment: '', notes: '' } // start with 1 default session
-      ]
+      studentName: '',
+      studentId: '',
+      assignment: '',
+      notes: ''
     });
   }
   return days;
@@ -113,6 +114,10 @@ function recalculateTotals() {
       if (weekFooterVal) {
         weekFooterVal.innerText = `${weekTotal.toFixed(1)} Hours`;
       }
+      const weeklyTotalCellDisplay = document.getElementById('weekly-total-display-value');
+      if (weeklyTotalCellDisplay) {
+        weeklyTotalCellDisplay.innerText = weekTotal.toFixed(1);
+      }
     }
   });
   
@@ -121,6 +126,12 @@ function recalculateTotals() {
   if (totalEl) {
     totalEl.innerHTML = `${periodTotal.toFixed(1)} <span style="font-size: 0.875rem; font-weight: 700; color: var(--text-medium);">Hours</span>`;
   }
+}
+
+function formatDateString(dateStr) {
+  if (!dateStr) return 'MM/DD/YYYY';
+  const [y, m, d] = dateStr.split('-');
+  return `${m}/${d}/${y}`;
 }
 
 // Date helper: autofill date inputs based on Period Start Date
@@ -142,10 +153,10 @@ function autofillDates() {
       
       day.date = `${yyyy}-${mm}-${dd}`;
       
-      // Update UI input if currently rendered
-      const dateInput = document.getElementById(`date-input-${wIdx}-${dIdx}`);
-      if (dateInput) {
-        dateInput.value = day.date;
+      // Update UI label if currently rendered
+      const dateLabel = document.getElementById(`date-label-${wIdx}-${dIdx}`);
+      if (dateLabel) {
+        dateLabel.innerText = formatDateString(day.date);
       }
     });
   });
@@ -159,9 +170,9 @@ function autofillDates() {
 
 function updateWeekStartDateField() {
   const activeMon = timesheetState.weeks[currentWeekIndex][0];
-  const weekStartInput = document.getElementById('week-start-date');
-  if (weekStartInput && activeMon.date) {
-    weekStartInput.value = activeMon.date;
+  const weekStartEl = document.getElementById('week-start-date-display');
+  if (weekStartEl) {
+    weekStartEl.innerText = activeMon.date ? formatDateString(activeMon.date) : 'MM/DD/YYYY';
   }
 }
 
@@ -215,72 +226,81 @@ function renderWeekTabs() {
   });
 }
 
+
 function renderDailyRows() {
   const tbody = document.getElementById('table-rows-body');
   tbody.innerHTML = '';
   
   const activeWeekDays = timesheetState.weeks[currentWeekIndex];
   
+  // Calculate total weekly hours first so we can show it in the rowspan cell
+  let weeklyTotalSum = 0;
+  activeWeekDays.forEach(day => weeklyTotalSum += day.hours);
+  
   activeWeekDays.forEach((day, dIdx) => {
     const tr = document.createElement('tr');
     
     // 1. Date column
     let dateCol = `
-      <td data-label="Date" style="padding: 8px;">
-        <div class="flex flex-col gap-1 items-start">
-          <span style="font-family: var(--font-display); font-weight: 800; font-size: 11px; color: var(--text-dark);">${day.dayName}</span>
-          <input type="date" id="date-input-${currentWeekIndex}-${dIdx}" class="table-input" style="padding: 6px 8px; font-size: 11px;" value="${day.date || ''}">
-        </div>
+      <td class="col-date" data-label="Date" style="padding: 8px; text-align: center;">
+        <div style="font-family: var(--font-display); font-weight: 800; font-size: 11px; color: var(--text-dark);">${day.dayName}</div>
+        <div id="date-label-${currentWeekIndex}-${dIdx}" style="font-size: 9px; color: var(--text-light); margin-top: 2px;">${formatDateString(day.date)}</div>
       </td>
     `;
     
-    // 2. Student Name / ID column
-    let studentCol = `
-      <td data-label="Student Sessions" style="padding: 8px; text-align: left;">
-        <div class="cell-sessions-container" id="cell-student-${currentWeekIndex}-${dIdx}"></div>
-        <button type="button" class="btn-add-session-inline" id="btn-add-session-${currentWeekIndex}-${dIdx}">
-          <i data-lucide="plus-circle" style="width: 0.75rem; height: 0.75rem;"></i> Add
-        </button>
-      </td>
-    `;
-    
-    // 3. Skills column
-    let skillsCol = `
-      <td data-label="Skills" style="padding: 8px;">
-        <div class="cell-sessions-container" id="cell-skills-${currentWeekIndex}-${dIdx}"></div>
-      </td>
-    `;
-    
-    // 4–5. Time In / Out (1st shift)
+    // 2-5. Time In / Out (1st shift)
     let shift1Cols = `
-      <td data-label="In" style="padding: 8px;"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
-      <td data-label="Out" style="padding: 8px;"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
+      <td class="col-shift" data-label="In" style="padding: 8px;"><input type="time" class="table-input" id="in1-${currentWeekIndex}-${dIdx}" value="${day.in1 || ''}"></td>
+      <td class="col-shift" data-label="Out" style="padding: 8px;"><input type="time" class="table-input" id="out1-${currentWeekIndex}-${dIdx}" value="${day.out1 || ''}"></td>
     `;
     
-    // 6–7. Time In / Out (2nd shift)
+    // 6-7. Time In / Out (2nd shift)
     let shift2Cols = `
-      <td data-label="In (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
-      <td data-label="Out (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
+      <td class="col-shift" data-label="In (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="in2-${currentWeekIndex}-${dIdx}" value="${day.in2 || ''}"></td>
+      <td class="col-shift" data-label="Out (2nd)" style="padding: 8px;"><input type="time" class="table-input" id="out2-${currentWeekIndex}-${dIdx}" value="${day.out2 || ''}"></td>
     `;
     
     // 8. Total Daily Hours
     let hoursCol = `
-      <td data-label="Total Hours" style="padding: 8px; text-align: center;">
+      <td class="col-hours" data-label="Total Daily Hours" style="padding: 8px; text-align: center;">
         <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: var(--text-dark);" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
       </td>
     `;
     
-    // 9. Progress Notes
-    let notesCol = `
-      <td data-label="Notes" style="padding: 8px;">
-        <div class="cell-sessions-container" id="cell-notes-${currentWeekIndex}-${dIdx}"></div>
+    // 9. Weekly Total column (rowspan="7" on first day only)
+    let weeklyTotalCol = '';
+    if (dIdx === 0) {
+      weeklyTotalCol = `
+        <td class="col-weekly" rowspan="7" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.02); border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border);">
+          <span style="font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--color-blue-vibrant);" id="weekly-total-display-value">${weeklyTotalSum.toFixed(1)}</span>
+        </td>
+      `;
+    }
+    
+    // 10. Student Name / ID column
+    let studentCol = `
+      <td class="col-student" data-label="Student Name / ID" style="padding: 8px;">
+        <input type="text" class="table-input" id="student-input-${currentWeekIndex}-${dIdx}" placeholder="Enter student name / ID..." value="${day.studentName || ''}">
       </td>
     `;
     
-    tr.innerHTML = dateCol + studentCol + skillsCol + shift1Cols + shift2Cols + hoursCol + notesCol;
+    // 11. Skills / Assignment(s) Worked On column
+    let skillsCol = `
+      <td class="col-skills" data-label="Skills / Assignment(s) Worked On" style="padding: 8px;">
+        <textarea class="table-input py-1.5 px-2 text-xs h-12 min-h-[40px] resize-y leading-tight" id="skills-input-${currentWeekIndex}-${dIdx}" placeholder="Enter skills / assignment...">${day.assignment || ''}</textarea>
+      </td>
+    `;
+    
+    // 12. Progress Notes column
+    let notesCol = `
+      <td class="col-notes" data-label="Progress Notes" style="padding: 8px;">
+        <textarea class="table-input py-1.5 px-2 text-xs h-12 min-h-[40px] resize-y leading-tight" id="notes-input-${currentWeekIndex}-${dIdx}" placeholder="Enter progress notes...">${day.notes || ''}</textarea>
+      </td>
+    `;
+    
+    tr.innerHTML = dateCol + shift1Cols + shift2Cols + hoursCol + weeklyTotalCol + studentCol + skillsCol + notesCol;
     tbody.appendChild(tr);
     
-    renderCellSessions(currentWeekIndex, dIdx);
     setupRowEvents(currentWeekIndex, dIdx);
   });
   
@@ -290,99 +310,48 @@ function renderDailyRows() {
 function setupRowEvents(wIdx, dIdx) {
   const day = timesheetState.weeks[wIdx][dIdx];
   
-  // Date Input Event
-  document.getElementById(`date-input-${wIdx}-${dIdx}`).addEventListener('change', (e) => {
-    day.date = e.target.value;
-  });
-  
   // Shifts Inputs Events
   const ids = [`in1-${wIdx}-${dIdx}`, `out1-${wIdx}-${dIdx}`, `in2-${wIdx}-${dIdx}`, `out2-${wIdx}-${dIdx}`];
   ids.forEach(id => {
-    document.getElementById(id).addEventListener('change', (e) => {
-      const field = id.split('-')[0];
-      day[field] = e.target.value;
-      
-      // Compute hours
-      updateDailyHours(wIdx, dIdx);
-      
-      // Update label
-      document.getElementById(`hours-display-${wIdx}-${dIdx}`).innerText = day.hours.toFixed(1);
-    });
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('change', (e) => {
+        const field = id.split('-')[0];
+        day[field] = e.target.value;
+        
+        // Compute hours
+        updateDailyHours(wIdx, dIdx);
+        
+        // Update label
+        const hoursDisp = document.getElementById(`hours-display-${wIdx}-${dIdx}`);
+        if (hoursDisp) hoursDisp.innerText = day.hours.toFixed(1);
+      });
+    }
   });
 
-  // Add Session inline click
-  document.getElementById(`btn-add-session-${wIdx}-${dIdx}`).addEventListener('click', () => {
-    day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
-    renderCellSessions(wIdx, dIdx);
-  });
-}
+  // Student Name / ID text input
+  const studentInput = document.getElementById(`student-input-${wIdx}-${dIdx}`);
+  if (studentInput) {
+    studentInput.addEventListener('input', (e) => {
+      day.studentName = e.target.value;
+    });
+  }
 
-// -------------------------------------------------------------
-// Render nested tutoring session lists directly inside cells
-// -------------------------------------------------------------
+  // Skills / Assignment worked on text input
+  const skillsInput = document.getElementById(`skills-input-${wIdx}-${dIdx}`);
+  if (skillsInput) {
+    skillsInput.addEventListener('input', (e) => {
+      day.assignment = e.target.value;
+    });
+  }
 
-function renderCellSessions(wIdx, dIdx) {
-  const studentCell = document.getElementById(`cell-student-${wIdx}-${dIdx}`);
-  const skillsCell = document.getElementById(`cell-skills-${wIdx}-${dIdx}`);
-  const notesCell = document.getElementById(`cell-notes-${wIdx}-${dIdx}`);
-  
-  if (!studentCell || !skillsCell || !notesCell) return;
-  
-  studentCell.innerHTML = '';
-  skillsCell.innerHTML = '';
-  notesCell.innerHTML = '';
-  
-  const day = timesheetState.weeks[wIdx][dIdx];
-  
-  day.sessions.forEach((session, sIdx) => {
-    // 1. Render Student Input slot (Tutor types name/ID manually)
-    const studentDiv = document.createElement('div');
-    studentDiv.className = 'cell-session-row';
-    studentDiv.innerHTML = `
-      <input type="text" class="table-input py-2 text-xs" placeholder="Student Name / ID..." value="${session.studentName || ''}" id="student-input-${wIdx}-${dIdx}-${sIdx}">
-    `;
-    studentCell.appendChild(studentDiv);
-    
-    document.getElementById(`student-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
-      session.studentName = e.target.value;
-      session.studentId = ''; // Not used anymore, kept for data compatibility
+  // Progress notes text input
+  const notesInput = document.getElementById(`notes-input-${wIdx}-${dIdx}`);
+  if (notesInput) {
+    notesInput.addEventListener('input', (e) => {
+      day.notes = e.target.value;
     });
-    
-    // 2. Render Skills Input slot
-    const skillsDiv = document.createElement('div');
-    skillsDiv.className = 'cell-session-row';
-    skillsDiv.innerHTML = `
-      <input type="text" class="table-input py-2 text-xs" placeholder="Enter skills..." value="${session.assignment || ''}" id="assignment-input-${wIdx}-${dIdx}-${sIdx}">
-    `;
-    skillsCell.appendChild(skillsDiv);
-    
-    document.getElementById(`assignment-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
-      session.assignment = e.target.value;
-    });
-    
-    // 3. Render Notes Textarea slot with Remove Button
-    const notesDiv = document.createElement('div');
-    notesDiv.className = 'cell-session-row pr-6'; // leave space for delete button
-    notesDiv.innerHTML = `
-      <textarea class="table-input py-1.5 px-2 text-xs h-9 min-h-[36px] resize-y leading-tight" placeholder="Enter progress notes..." id="notes-input-${wIdx}-${dIdx}-${sIdx}">${session.notes || ''}</textarea>
-      <button type="button" class="btn-delete-session" id="btn-delete-${wIdx}-${dIdx}-${sIdx}" title="Delete Session">
-        <i data-lucide="x" class="h-3 w-3"></i>
-      </button>
-    `;
-    notesCell.appendChild(notesDiv);
-    
-    document.getElementById(`notes-input-${wIdx}-${dIdx}-${sIdx}`).addEventListener('input', (e) => {
-      session.notes = e.target.value;
-    });
-
-    // Delete Session listener
-    document.getElementById(`btn-delete-${wIdx}-${dIdx}-${sIdx}`).addEventListener('click', () => {
-      day.sessions.splice(sIdx, 1);
-      renderCellSessions(wIdx, dIdx);
-    });
-  });
-  
-  lucide.createIcons();
+  }
 }
 
 // -------------------------------------------------------------
@@ -495,6 +464,19 @@ function loadDraft() {
   try {
     timesheetState = JSON.parse(data);
     
+    // Migrate legacy session arrays to flat properties for backward-compatibility
+    if (timesheetState.weeks) {
+      timesheetState.weeks.forEach(week => {
+        week.forEach(day => {
+          if (day.sessions && day.sessions.length > 0) {
+            if (!day.studentName) day.studentName = day.sessions[0].studentName || '';
+            if (!day.assignment) day.assignment = day.sessions[0].assignment || '';
+            if (!day.notes) day.notes = day.sessions[0].notes || '';
+          }
+        });
+      });
+    }
+    
     // Fill metadata inputs
     document.getElementById('emp-name').value = timesheetState.employeeName || '';
     document.getElementById('emp-id').value = timesheetState.tutorId || '';
@@ -571,15 +553,6 @@ document.addEventListener('DOMContentLoaded', () => {
     recalculateTotals();
   });
 
-  // Add Student Session button at the bottom of the table
-  const addSessionTable = document.getElementById('btn-add-session-table');
-  if (addSessionTable) {
-    addSessionTable.addEventListener('click', () => {
-      const day = timesheetState.weeks[currentWeekIndex][0];
-      day.sessions.push({ studentId: '', studentName: '', assignment: '', notes: '' });
-      renderCellSessions(currentWeekIndex, 0);
-    });
-  }
 
   // Footer Download PDF button
   const pdfFooterBtn = document.getElementById('btn-download-pdf-footer');
@@ -648,20 +621,18 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalDayHours = p1 + p2;
         
         // If there are hours worked or a student session, log it
-        if (totalDayHours > 0 || (day.sessions && day.sessions.length > 0)) {
+        if (totalDayHours > 0 || day.studentName || day.assignment || day.notes) {
           weekHasLogs = true;
-          const formattedDate = day.dateVal || 'N/A';
+          const formattedDate = day.date ? formatDateString(day.date) : 'N/A';
           body += `- ${day.dayNameFull} (${formattedDate}):\n`;
           if (totalDayHours > 0) {
             body += `  * Hours Logged: ${totalDayHours.toFixed(1)} Hours (Shift 1: ${day.in1 || '--'} to ${day.out1 || '--'} | Shift 2: ${day.in2 || '--'} to ${day.out2 || '--'})\n`;
           }
-          if (day.sessions && day.sessions.length > 0) {
-            body += `  * Tutoring Sessions:\n`;
-            day.sessions.forEach(sess => {
-              body += `    + Student: ${sess.studentName}\n`;
-              body += `      Skills Worked On: ${sess.assignment || ''}\n`;
-              body += `      Progress Notes: ${sess.notes || ''}\n`;
-            });
+          if (day.studentName || day.assignment || day.notes) {
+            body += `  * Tutoring Session:\n`;
+            body += `    + Student: ${day.studentName || 'N/A'}\n`;
+            body += `      Skills Worked On: ${day.assignment || 'N/A'}\n`;
+            body += `      Progress Notes: ${day.notes || 'N/A'}\n`;
           }
         }
       });

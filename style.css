@@ -989,6 +989,10 @@ textarea.table-input {
  * Print Stylesheet (preserved)
  * ------------------------------------------------------------- */
 @media print {
+  @page {
+    size: letter landscape;
+    margin: 0.4in;
+  }
   body {
     background: #ffffff !important;
     color: var(--text-dark) !important;
@@ -1060,15 +1064,13 @@ textarea.table-input {
   }
 
   /* Specify column widths for print table to avoid overlapping or clipping */
-  #timesheet-table th:nth-child(1), #timesheet-table td:nth-child(1) { width: 70px !important; } /* Date */
-  #timesheet-table th:nth-child(2), #timesheet-table td:nth-child(2) { width: 110px !important; } /* Student Name/ID */
-  #timesheet-table th:nth-child(3), #timesheet-table td:nth-child(3) { width: 110px !important; } /* Skills */
-  #timesheet-table th:nth-child(4), #timesheet-table td:nth-child(4) { width: 45px !important; } /* In */
-  #timesheet-table th:nth-child(5), #timesheet-table td:nth-child(5) { width: 45px !important; } /* Out */
-  #timesheet-table th:nth-child(6), #timesheet-table td:nth-child(6) { width: 45px !important; } /* In 2nd */
-  #timesheet-table th:nth-child(7), #timesheet-table td:nth-child(7) { width: 45px !important; } /* Out 2nd */
-  #timesheet-table th:nth-child(8), #timesheet-table td:nth-child(8) { width: 45px !important; } /* Hours */
-  #timesheet-table th:nth-child(9), #timesheet-table td:nth-child(9) { width: 120px !important; } /* Notes */
+  #timesheet-table .col-date { width: 55px !important; }
+  #timesheet-table .col-shift { width: 45px !important; }
+  #timesheet-table .col-hours { width: 55px !important; }
+  #timesheet-table .col-weekly { width: 55px !important; }
+  #timesheet-table .col-student { width: 110px !important; }
+  #timesheet-table .col-skills { width: 130px !important; }
+  #timesheet-table .col-notes { width: 130px !important; }
 
   #timesheet-table .table-input {
     font-size: 9px !important;
