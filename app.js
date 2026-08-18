@@ -196,19 +196,63 @@ function updateReportingPeriodDisplay() {
 // Rendering rows and tabs
 // -------------------------------------------------------------
 
+function deleteWeek(wIdx) {
+  if (timesheetState.weeks.length <= 1) return;
+  
+  const weekTotal = timesheetState.weeks[wIdx].reduce((sum, d) => sum + d.hours, 0);
+  if (weekTotal > 0) {
+    if (!confirm(`Week ${wIdx + 1} has ${weekTotal.toFixed(1)} recorded hours. Are you sure you want to delete this week?`)) {
+      return;
+    }
+  }
+  
+  timesheetState.weeks.splice(wIdx, 1);
+  if (currentWeekIndex >= timesheetState.weeks.length) {
+    currentWeekIndex = Math.max(0, timesheetState.weeks.length - 1);
+  }
+  
+  autofillDates();
+  renderWeekTabs();
+  renderDailyRows();
+  recalculateTotals();
+}
+
 function renderWeekTabs() {
   const container = document.getElementById('week-tabs-container');
   container.innerHTML = '';
+  const totalWeeks = timesheetState.weeks.length;
   
   timesheetState.weeks.forEach((week, wIdx) => {
     let weekTotal = 0;
     week.forEach(d => weekTotal += d.hours);
     
-    const tabButton = document.createElement('button');
-    tabButton.type = 'button';
+    const tabButton = document.createElement('div');
     tabButton.id = `tab-week-${wIdx}`;
-    tabButton.className = `tab-week cursor-pointer ${currentWeekIndex === wIdx ? 'active' : ''}`;
-    tabButton.innerHTML = `Week ${wIdx + 1} <span class="tab-hours-badge">${weekTotal.toFixed(1)}h</span>`;
+    tabButton.className = `tab-week cursor-pointer flex items-center gap-1.5 ${currentWeekIndex === wIdx ? 'active' : ''}`;
+    
+    const labelSpan = document.createElement('span');
+    labelSpan.innerText = `Week ${wIdx + 1}`;
+    
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'tab-hours-badge';
+    badgeSpan.innerText = `${weekTotal.toFixed(1)}h`;
+
+    tabButton.appendChild(labelSpan);
+    tabButton.appendChild(badgeSpan);
+    
+    if (totalWeeks > 1) {
+      const delBtn = document.createElement('button');
+      delBtn.type = 'button';
+      delBtn.className = 'btn-delete-week';
+      delBtn.title = 'Delete Week';
+      delBtn.setAttribute('aria-label', `Delete Week ${wIdx + 1}`);
+      delBtn.innerHTML = '&times;';
+      delBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteWeek(wIdx);
+      });
+      tabButton.appendChild(delBtn);
+    }
     
     tabButton.addEventListener('click', () => {
       currentWeekIndex = wIdx;
@@ -242,9 +286,9 @@ function renderDailyRows() {
     
     // 1. Date column
     let dateCol = `
-      <td class="col-date" data-label="Date" style="padding: 8px; text-align: center;">
-        <div style="font-family: var(--font-display); font-weight: 800; font-size: 11px; color: var(--text-dark);">${day.dayName}</div>
-        <div id="date-label-${currentWeekIndex}-${dIdx}" style="font-size: 9px; color: var(--text-light); margin-top: 2px;">${formatDateString(day.date)}</div>
+      <td class="col-date" data-label="Date" style="padding: 10px 8px; text-align: center;">
+        <div style="font-family: var(--font-display); font-weight: 700; font-size: 14px; color: #0f172a;">${day.dayName}</div>
+        <div id="date-label-${currentWeekIndex}-${dIdx}" style="font-size: 12px; color: #475569; font-weight: 500; margin-top: 2px; font-feature-settings: 'tnum';">${formatDateString(day.date)}</div>
       </td>
     `;
     
@@ -262,8 +306,8 @@ function renderDailyRows() {
     
     // 8. Total Daily Hours
     let hoursCol = `
-      <td class="col-hours" data-label="Total Daily Hours" style="padding: 8px; text-align: center;">
-        <span style="font-family: var(--font-mono); font-size: 13px; font-weight: 800; color: var(--text-dark);" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
+      <td class="col-hours" data-label="Daily Hours" style="padding: 8px; text-align: center;">
+        <span style="font-family: var(--font-body); font-feature-settings: 'tnum'; font-size: 14px; font-weight: 700; color: #002060; background: rgba(79, 70, 229, 0.08); padding: 4px 10px; border-radius: 6px; display: inline-block;" id="hours-display-${currentWeekIndex}-${dIdx}">${day.hours.toFixed(1)}</span>
       </td>
     `;
     
@@ -271,8 +315,8 @@ function renderDailyRows() {
     let weeklyTotalCol = '';
     if (dIdx === 0) {
       weeklyTotalCol = `
-        <td class="col-weekly" rowspan="7" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.02); border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border);">
-          <span style="font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--color-blue-vibrant);" id="weekly-total-display-value">${weeklyTotalSum.toFixed(1)}</span>
+        <td class="col-weekly" rowspan="7" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.03); border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">
+          <span style="font-family: var(--font-body); font-feature-settings: 'tnum'; font-size: 16px; font-weight: 800; color: var(--color-blue-vibrant); background: rgba(79, 70, 229, 0.08); padding: 6px 12px; border-radius: 8px; display: inline-block;" id="weekly-total-display-value">${weeklyTotalSum.toFixed(1)}</span>
         </td>
       `;
     }
@@ -280,21 +324,21 @@ function renderDailyRows() {
     // 10. Student Name / ID column
     let studentCol = `
       <td class="col-student" data-label="Student Name / ID" style="padding: 8px;">
-        <input type="text" class="table-input" id="student-input-${currentWeekIndex}-${dIdx}" placeholder="Enter student name / ID..." value="${day.studentName || ''}">
+        <input type="text" class="table-input" id="student-input-${currentWeekIndex}-${dIdx}" placeholder="Enter student name or ID..." value="${day.studentName || ''}">
       </td>
     `;
     
     // 11. Skills / Assignment(s) Worked On column
     let skillsCol = `
-      <td class="col-skills" data-label="Skills / Assignment(s) Worked On" style="padding: 8px;">
-        <textarea class="table-input py-1.5 px-2 text-xs h-12 min-h-[40px] resize-y leading-tight" id="skills-input-${currentWeekIndex}-${dIdx}" placeholder="Enter skills / assignment...">${day.assignment || ''}</textarea>
+      <td class="col-skills" data-label="Skills / Assignments Worked On" style="padding: 8px;">
+        <textarea class="table-input py-1.5 px-2.5 text-xs h-12 min-h-[40px] resize-y leading-snug" id="skills-input-${currentWeekIndex}-${dIdx}" placeholder="Enter skills or assignments...">${day.assignment || ''}</textarea>
       </td>
     `;
     
     // 12. Progress Notes column
     let notesCol = `
       <td class="col-notes" data-label="Progress Notes" style="padding: 8px;">
-        <textarea class="table-input py-1.5 px-2 text-xs h-12 min-h-[40px] resize-y leading-tight" id="notes-input-${currentWeekIndex}-${dIdx}" placeholder="Enter progress notes...">${day.notes || ''}</textarea>
+        <textarea class="table-input py-1.5 px-2.5 text-xs h-12 min-h-[40px] resize-y leading-snug" id="notes-input-${currentWeekIndex}-${dIdx}" placeholder="Enter progress notes...">${day.notes || ''}</textarea>
       </td>
     `;
     
@@ -549,7 +593,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add Week tab click
   document.getElementById('btn-add-week').addEventListener('click', () => {
     timesheetState.weeks.push(createEmptyWeek());
+    currentWeekIndex = timesheetState.weeks.length - 1;
+    autofillDates();
     renderWeekTabs();
+    renderDailyRows();
     recalculateTotals();
   });
 

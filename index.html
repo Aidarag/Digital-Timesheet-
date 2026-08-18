@@ -21,9 +21,10 @@
   <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <!-- Google Fonts — Inter & Manrope -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Urbanist:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@700&family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <link rel="stylesheet" href="style.css">
 </head>
@@ -37,11 +38,11 @@
 
   <!-- 00 — SPLASH SCREEN -->
   <div id="splash-screen">
-    <div style="border-radius: 9999px; border: 1px solid rgba(148, 163, 184, 0.4); padding: 4px 20px; font-size: 12px; font-style: italic; font-family: Georgia, serif; color: #475569;">
+    <div style="border-radius: 9999px; border: 1px solid rgba(148, 163, 184, 0.4); padding: 4px 20px; font-size: 12px; font-weight: 500; font-family: var(--font-body); color: #475569;">
       Success Center
     </div>
     <div style="text-align: center; margin-top: 10px;">
-      <h1 class="font-display" style="letter-spacing: 0.1em; font-size: 2.5rem; font-weight: 900; color: #002060; font-family: var(--font-display);">TIME TO</h1>
+      <h1 class="font-display" style="letter-spacing: -0.02em; font-size: 2.25rem; font-weight: 800; color: #002060; font-family: var(--font-display);">Time to</h1>
       <div class="text-script-blue font-handwritten">Clock It</div>
     </div>
     <div class="splash-loader-container">
@@ -51,7 +52,7 @@
         <div class="clock-hand-minute"></div>
       </div>
     </div>
-    <div style="color: #94a3b8; font-family: var(--font-mono); font-size: 10px; text-transform: uppercase; letter-spacing: 0.1em;">
+    <div style="color: #64748b; font-family: var(--font-body); font-size: 12px; font-weight: 500;">
       Preparing your timesheet...
     </div>
     <div class="splash-slogan">
@@ -92,19 +93,19 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Tutor Name</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor Name</label>
               <input type="text" id="emp-name" required placeholder="Enter tutor name..." class="input-flat">
             </div>
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Tutor ID</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor ID</label>
               <input type="text" id="emp-id" placeholder="XXX-XXX-XXX" class="input-flat">
             </div>
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Position</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Position</label>
               <input type="text" id="emp-position" readonly value="Tutor" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
             </div>
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Department</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Department</label>
               <input type="text" id="emp-dept" readonly value="Success Center" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
             </div>
           </div>
@@ -117,11 +118,11 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">Start Date</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Start Date</label>
               <input type="date" id="period-start" required class="input-flat">
             </div>
             <div>
-              <label class="label-mono" style="font-size: 9px; display: block; margin-bottom: 4px;">End Date</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">End Date</label>
               <input type="date" id="period-end" required class="input-flat">
             </div>
           </div>
@@ -136,14 +137,14 @@
           <div class="flex items-center gap-2 flex-wrap">
             <div id="week-tabs-container" class="flex gap-2 flex-wrap"></div>
             <!-- Week Start Date Display -->
-            <span id="week-start-date-container" style="font-size: 11px; color: var(--text-medium); margin-left: 10px; display: inline-flex; align-items: center; gap: 4px;">
-              <i data-lucide="calendar" style="width: 0.85rem; height: 0.85rem;"></i>
-              Week Start Date: <span id="week-start-date-display" style="font-weight: 700; color: var(--text-dark);">MM/DD/YYYY</span>
+            <span id="week-start-date-container" style="font-size: 12px; color: var(--text-medium); margin-left: 10px; display: inline-flex; align-items: center; gap: 6px;">
+              <i data-lucide="calendar" style="width: 0.9rem; height: 0.9rem;"></i>
+              Week Start Date: <span id="week-start-date-display" style="font-weight: 700; color: var(--text-dark); font-feature-settings: 'tnum';">MM/DD/YYYY</span>
             </span>
           </div>
           <div class="flex items-center gap-2">
-            <button type="button" id="btn-add-week" class="btn-secondary" style="padding: 6px 14px; font-size: 10px;">
-              <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Week
+            <button type="button" id="btn-add-week" class="btn-secondary" style="padding: 7px 16px; font-size: 12px;">
+              <i data-lucide="plus" style="width: 0.9rem; height: 0.9rem; display: inline;"></i> Add Week
             </button>
           </div>
         </div>
@@ -158,10 +159,10 @@
                 <th class="col-shift" style="width: 75px;">Out</th>
                 <th class="col-shift" style="width: 75px;">In</th>
                 <th class="col-shift" style="width: 75px;">Out</th>
-                <th class="col-hours" style="width: 90px;">Total Daily Hours</th>
-                <th class="col-weekly" style="width: 90px;">Weekly Total</th>
+                <th class="col-hours" style="width: 95px;">Daily Hours</th>
+                <th class="col-weekly" style="width: 95px;">Weekly Total</th>
                 <th class="col-student" style="width: 180px;">Student Name / ID</th>
-                <th class="col-skills" style="width: 200px;">Skills / Assignment(s) Worked On</th>
+                <th class="col-skills" style="width: 200px;">Skills / Assignments Worked On</th>
                 <th class="col-notes" style="width: 200px; border-radius: 0;">Progress Notes</th>
               </tr>
             </thead>
@@ -173,8 +174,8 @@
 
         <!-- Weekly Total Footer -->
         <div class="week-footer">
-          <span style="font-family: var(--font-display); font-weight: 800; font-size: 0.8rem; color: var(--text-medium); text-transform: uppercase; letter-spacing: 0.05em;" id="week-total-label">Weekly Total</span>
-          <span style="font-family: var(--font-mono); font-weight: 800; font-size: 1rem; color: var(--color-blue-vibrant);" id="week-total-value">0.0 Hours</span>
+          <span style="font-family: var(--font-display); font-weight: 700; font-size: 0.9rem; color: var(--text-medium);" id="week-total-label">Weekly Total</span>
+          <span style="font-family: var(--font-body); font-feature-settings: 'tnum'; font-weight: 800; font-size: 1.1rem; color: var(--color-blue-vibrant);" id="week-total-value">0.0 Hours</span>
         </div>
       </div>
 
@@ -187,15 +188,15 @@
             <i data-lucide="trending-up" style="width: 1.25rem; height: 1.25rem;"></i>
           </div>
           <div>
-            <div class="label-mono" style="font-size: 9px; color: var(--color-blue-vibrant);">Total Hours This Period</div>
-            <div style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 900; color: var(--text-dark);" id="summary-total-hours">0.0 <span style="font-size: 0.875rem; font-weight: 700; color: var(--text-medium);">Hours</span></div>
-            <div style="font-size: 0.7rem; color: var(--text-light);">Total hours for <span id="total-hours-period-label">this period</span></div>
+            <div class="label-mono" style="color: var(--color-blue-vibrant);">Total Hours This Period</div>
+            <div style="font-family: var(--font-display); font-size: 1.6rem; font-weight: 800; color: var(--text-dark); font-feature-settings: 'tnum';" id="summary-total-hours">0.0 <span style="font-size: 0.875rem; font-weight: 600; color: var(--text-medium);">Hours</span></div>
+            <div style="font-size: 0.75rem; color: var(--text-light);">Total hours for <span id="total-hours-period-label">this period</span></div>
           </div>
         </div>
 
         <!-- Tutor Signature -->
         <div class="glass-card sig-card">
-          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+          <div class="section-label" style="margin-bottom: 0.6rem; font-size: 0.8rem;">
             <i data-lucide="edit-3"></i> Tutor Signature
           </div>
           <div class="sig-canvas-wrap cursor-crosshair">
@@ -203,17 +204,17 @@
             <span id="placeholder-employee" class="sig-placeholder">Sign here</span>
           </div>
           <div class="sig-date-row">
-            <button type="button" id="btn-clear-employee" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
-            <div class="flex items-center gap-1">
-              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
-              <input type="date" id="date-employee" required class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
+            <button type="button" id="btn-clear-employee" style="font-size: 11px; font-family: var(--font-body); font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1.5">
+              <span class="label-mono" style="font-size: 11px;">Date Signed</span>
+              <input type="date" id="date-employee" required class="input-flat" style="padding: 4px 8px; font-size: 11px; width: 135px;">
             </div>
           </div>
         </div>
 
         <!-- Supervisor Signature -->
         <div class="glass-card sig-card">
-          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+          <div class="section-label" style="margin-bottom: 0.6rem; font-size: 0.8rem;">
             <i data-lucide="user-check"></i> Supervisor Signature
           </div>
           <div class="sig-canvas-wrap cursor-crosshair">
@@ -221,17 +222,17 @@
             <span id="placeholder-supervisor" class="sig-placeholder">Sign here</span>
           </div>
           <div class="sig-date-row">
-            <button type="button" id="btn-clear-supervisor" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
-            <div class="flex items-center gap-1">
-              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
-              <input type="date" id="date-supervisor" class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
+            <button type="button" id="btn-clear-supervisor" style="font-size: 11px; font-family: var(--font-body); font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1.5">
+              <span class="label-mono" style="font-size: 11px;">Date Signed</span>
+              <input type="date" id="date-supervisor" class="input-flat" style="padding: 4px 8px; font-size: 11px; width: 135px;">
             </div>
           </div>
         </div>
 
         <!-- Payroll Signature -->
         <div class="glass-card sig-card">
-          <div class="section-label" style="margin-bottom: 0.5rem; font-size: 0.7rem;">
+          <div class="section-label" style="margin-bottom: 0.6rem; font-size: 0.8rem;">
             <i data-lucide="shield-check"></i> Payroll Signature
           </div>
           <div class="sig-canvas-wrap cursor-crosshair">
@@ -239,10 +240,10 @@
             <span id="placeholder-payroll" class="sig-placeholder">Sign here</span>
           </div>
           <div class="sig-date-row">
-            <button type="button" id="btn-clear-payroll" style="font-size: 9px; font-family: var(--font-mono); font-weight: 700; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
-            <div class="flex items-center gap-1">
-              <span class="label-mono" style="font-size: 8px;">Date Signed</span>
-              <input type="date" id="date-payroll" class="input-flat" style="padding: 4px 8px; font-size: 10px; width: 130px;">
+            <button type="button" id="btn-clear-payroll" style="font-size: 11px; font-family: var(--font-body); font-weight: 600; color: var(--text-light); background: none; border: none; cursor: pointer;">Clear</button>
+            <div class="flex items-center gap-1.5">
+              <span class="label-mono" style="font-size: 11px;">Date Signed</span>
+              <input type="date" id="date-payroll" class="input-flat" style="padding: 4px 8px; font-size: 11px; width: 135px;">
             </div>
           </div>
         </div>
@@ -276,8 +277,8 @@
         <i data-lucide="check-circle" style="width: 1.75rem; height: 1.75rem;"></i>
       </div>
       <div style="margin-top: 1.25rem;">
-        <h3 style="font-family: var(--font-display); font-size: 1.5rem; font-weight: 900; text-transform: uppercase; letter-spacing: 0.05em;">Timesheet Finalized!</h3>
-        <p style="font-size: 0.85rem; color: var(--text-medium); margin-top: 0.5rem; line-height: 1.5;">
+        <h3 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em;">Timesheet Finalized!</h3>
+        <p style="font-size: 0.875rem; color: var(--text-medium); margin-top: 0.5rem; line-height: 1.5;">
           Your timesheet has been authorized and locked. Choose an action:
         </p>
       </div>
@@ -288,7 +289,7 @@
         <button type="button" id="btn-download-pdf" class="btn-secondary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
           <i data-lucide="download" style="width: 1rem; height: 1rem;"></i> Download PDF
         </button>
-        <button type="button" id="btn-close-modal" style="padding: 10px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-mono); font-weight: 700; font-size: 12px; cursor: pointer;">
+        <button type="button" id="btn-close-modal" style="padding: 10px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-body); font-weight: 600; font-size: 13px; cursor: pointer;">
           Back to Dashboard
         </button>
       </div>
