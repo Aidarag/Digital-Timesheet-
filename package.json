@@ -1,0 +1,13 @@
+{
+  "name": "digital-timesheet",
+  "version": "1.0.0",
+  "description": "Success Center Digital Timesheet — Livingstone College",
+  "main": "app.js",
+  "scripts": {
+    "dev": "serve .",
+    "start": "serve ."
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
