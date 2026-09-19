@@ -7,7 +7,7 @@ let timesheetState = {
   employeeName: '',
   periodStart: '',
   periodEnd: '',
-  weeks: [], // Array of weeks, each containing 7 days (Monday to Sunday)
+  weeks: [], // Array of weeks, each containing 6 days (Monday to Saturday, Sundays excluded)
   signatures: {
     employee: '',
     supervisor: '',
@@ -21,11 +21,11 @@ let timesheetState = {
   isSubmitted: false
 };
 
-const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const DAYS_OF_WEEK_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const DAYS_OF_WEEK_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 let currentWeekIndex = 0;
 
-// Initialize 5 weeks with 7 days each
+// Initialize 5 weeks with 6 days each (Mon-Sat, no Sundays)
 function initDefaultWeeks() {
   timesheetState.weeks = [];
   for (let w = 0; w < 5; w++) {
@@ -35,7 +35,7 @@ function initDefaultWeeks() {
 
 function createEmptyWeek() {
   const days = [];
-  for (let d = 0; d < 7; d++) {
+  for (let d = 0; d < DAYS_OF_WEEK.length; d++) {
     days.push({
       dayName: DAYS_OF_WEEK[d],
       dayNameFull: DAYS_OF_WEEK_FULL[d],
@@ -139,13 +139,30 @@ function autofillDates() {
   const startVal = document.getElementById('period-start').value;
   if (!startVal) return;
   
-  const baseDate = new Date(startVal + 'T00:00:00');
+  // Parse date without timezone offsets
+  const [startY, startM, startD] = startVal.split('-').map(Number);
+  const baseDate = new Date(startY, startM - 1, startD);
   
+  // Align to Monday of that week:
+  // getDay(): 0 = Sun, 1 = Mon, 2 = Tue, 3 = Wed, 4 = Thu, 5 = Fri, 6 = Sat
+  const dayOfWeek = baseDate.getDay();
+  let mondayOffset = 0;
+  if (dayOfWeek === 0) {
+    mondayOffset = 1; // Advance Sunday to Monday (Sundays are excluded)
+  } else if (dayOfWeek > 1) {
+    mondayOffset = -(dayOfWeek - 1); // Rewind to Monday of this week
+  }
+  
+  const startingMonday = new Date(baseDate);
+  startingMonday.setDate(baseDate.getDate() + mondayOffset);
+
   timesheetState.weeks.forEach((week, wIdx) => {
     week.forEach((day, dIdx) => {
+      // 6 days per week: dIdx 0..5 (Mon..Sat).
+      // Week wIdx starts wIdx * 7 days after startingMonday, skipping Sunday (day offset 6).
       const dayOffset = (wIdx * 7) + dIdx;
-      const currentDayDate = new Date(baseDate);
-      currentDayDate.setDate(baseDate.getDate() + dayOffset);
+      const currentDayDate = new Date(startingMonday);
+      currentDayDate.setDate(startingMonday.getDate() + dayOffset);
       
       const yyyy = currentDayDate.getFullYear();
       const mm = String(currentDayDate.getMonth() + 1).padStart(2, '0');
@@ -161,7 +178,7 @@ function autofillDates() {
     });
   });
 
-  // Update Week Start Date input field for active week
+  // Update Week Date Range input field for active week
   updateWeekStartDateField();
   
   // Update Reporting Period display range
@@ -169,10 +186,18 @@ function autofillDates() {
 }
 
 function updateWeekStartDateField() {
-  const activeMon = timesheetState.weeks[currentWeekIndex][0];
+  const activeWeek = timesheetState.weeks[currentWeekIndex];
   const weekStartEl = document.getElementById('week-start-date-display');
-  if (weekStartEl) {
-    weekStartEl.innerText = activeMon.date ? formatDateString(activeMon.date) : 'MM/DD/YYYY';
+  if (weekStartEl && activeWeek && activeWeek.length > 0) {
+    const monDate = activeWeek[0].date ? formatDateString(activeWeek[0].date) : '';
+    const satDate = activeWeek[activeWeek.length - 1].date ? formatDateString(activeWeek[activeWeek.length - 1].date) : '';
+    if (monDate && satDate) {
+      weekStartEl.innerText = `${monDate} – ${satDate}`;
+    } else if (monDate) {
+      weekStartEl.innerText = monDate;
+    } else {
+      weekStartEl.innerText = 'MM/DD/YYYY';
+    }
   }
 }
 
@@ -220,10 +245,25 @@ function renderWeekTabs() {
       
       renderDailyRows();
       recalculateTotals();
+      updateWeekStartDateField();
     });
     
     container.appendChild(tabButton);
   });
+
+  // Update remove week button state
+  const removeBtn = document.getElementById('btn-remove-week');
+  if (removeBtn) {
+    if (timesheetState.weeks.length <= 1) {
+      removeBtn.disabled = true;
+      removeBtn.style.opacity = '0.35';
+      removeBtn.style.cursor = 'not-allowed';
+    } else {
+      removeBtn.disabled = false;
+      removeBtn.style.opacity = '1';
+      removeBtn.style.cursor = 'pointer';
+    }
+  }
 }
 
 
@@ -267,11 +307,11 @@ function renderDailyRows() {
       </td>
     `;
     
-    // 9. Weekly Total column (rowspan="7" on first day only)
+    // 9. Weekly Total column (rowspan for all days of the week on first day only)
     let weeklyTotalCol = '';
     if (dIdx === 0) {
       weeklyTotalCol = `
-        <td class="col-weekly" rowspan="7" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.02); border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border);">
+        <td class="col-weekly" rowspan="${activeWeekDays.length}" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.02); border-left: 1px solid var(--color-border); border-right: 1px solid var(--color-border);">
           <span style="font-family: var(--font-mono); font-size: 14px; font-weight: 800; color: var(--color-blue-vibrant);" id="weekly-total-display-value">${weeklyTotalSum.toFixed(1)}</span>
         </td>
       `;
@@ -310,14 +350,14 @@ function renderDailyRows() {
 function setupRowEvents(wIdx, dIdx) {
   const day = timesheetState.weeks[wIdx][dIdx];
   
-  // Shifts Inputs Events
+  // Shifts Inputs Events (listen to both change and input)
   const ids = [`in1-${wIdx}-${dIdx}`, `out1-${wIdx}-${dIdx}`, `in2-${wIdx}-${dIdx}`, `out2-${wIdx}-${dIdx}`];
   ids.forEach(id => {
     const el = document.getElementById(id);
     if (el) {
-      el.addEventListener('change', (e) => {
+      const handleShiftUpdate = () => {
         const field = id.split('-')[0];
-        day[field] = e.target.value;
+        day[field] = el.value;
         
         // Compute hours
         updateDailyHours(wIdx, dIdx);
@@ -325,7 +365,10 @@ function setupRowEvents(wIdx, dIdx) {
         // Update label
         const hoursDisp = document.getElementById(`hours-display-${wIdx}-${dIdx}`);
         if (hoursDisp) hoursDisp.innerText = day.hours.toFixed(1);
-      });
+      };
+
+      el.addEventListener('change', handleShiftUpdate);
+      el.addEventListener('input', handleShiftUpdate);
     }
   });
 
@@ -464,9 +507,17 @@ function loadDraft() {
   try {
     timesheetState = JSON.parse(data);
     
-    // Migrate legacy session arrays to flat properties for backward-compatibility
+    // Migrate legacy session arrays to flat properties and ensure Sunday is omitted
     if (timesheetState.weeks) {
       timesheetState.weeks.forEach(week => {
+        // Strip out Sunday if present
+        const sunIdx = week.findIndex(d => d.dayName === 'Sun' || d.dayNameFull === 'Sunday');
+        if (sunIdx !== -1) {
+          week.splice(sunIdx, 1);
+        }
+        if (week.length > 6) {
+          week.length = 6;
+        }
         week.forEach(day => {
           if (day.sessions && day.sessions.length > 0) {
             if (!day.studentName) day.studentName = day.sessions[0].studentName || '';
@@ -549,10 +600,36 @@ document.addEventListener('DOMContentLoaded', () => {
   // Add Week tab click
   document.getElementById('btn-add-week').addEventListener('click', () => {
     timesheetState.weeks.push(createEmptyWeek());
+    autofillDates();
+    currentWeekIndex = timesheetState.weeks.length - 1;
     renderWeekTabs();
+    renderDailyRows();
     recalculateTotals();
+    updateWeekStartDateField();
   });
 
+  // Remove Week click
+  const btnRemoveWeek = document.getElementById('btn-remove-week');
+  if (btnRemoveWeek) {
+    btnRemoveWeek.addEventListener('click', () => {
+      if (timesheetState.weeks.length <= 1) {
+        alert('You must keep at least one week on the timesheet.');
+        return;
+      }
+      const confirmRemove = confirm(`Remove Week ${currentWeekIndex + 1}? Any hours entered for this week will be deleted.`);
+      if (!confirmRemove) return;
+
+      timesheetState.weeks.splice(currentWeekIndex, 1);
+      if (currentWeekIndex >= timesheetState.weeks.length) {
+        currentWeekIndex = timesheetState.weeks.length - 1;
+      }
+      autofillDates();
+      renderWeekTabs();
+      renderDailyRows();
+      recalculateTotals();
+      updateWeekStartDateField();
+    });
+  }
 
   // Footer Download PDF button
   const pdfFooterBtn = document.getElementById('btn-download-pdf-footer');
@@ -579,17 +656,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Construct Subject
     const subject = `[Timesheet Submission] ${employeeName} - Tutor (${startPeriod} to ${endPeriod})`;
 
-    // Calculate totals
-    let weekTotals = [0, 0, 0, 0, 0];
+    // Calculate totals dynamically for all weeks
+    let weekTotals = [];
     let grandTotal = 0;
-    timesheetState.weeks.forEach((week, wIdx) => {
+    timesheetState.weeks.forEach((week) => {
       let weekSum = 0;
       week.forEach(day => {
         const p1 = getHoursDiff(day.in1, day.out1);
         const p2 = getHoursDiff(day.in2, day.out2);
         weekSum += (p1 + p2);
       });
-      weekTotals[wIdx] = weekSum;
+      weekTotals.push(weekSum);
       grandTotal += weekSum;
     });
 
@@ -610,7 +687,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     body += `- GRAND TOTAL HOURS: ${grandTotal.toFixed(1)} Hours\n\n`;
 
-    body += `DAILY LOG DETAILS & TUTORING SESSIONS:\n`;
+    body += `DAILY LOG DETAILS & TUTORING SESSIONS (MON-SAT):\n`;
     body += `----------------------------------------------\n`;
     timesheetState.weeks.forEach((week, wIdx) => {
       body += `\n[WEEK ${wIdx + 1}]\n`;
@@ -672,7 +749,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Verify shifts hours validation checks
     let hasValidationError = false;
     timesheetState.weeks.forEach((week, wIdx) => {
-      week.forEach((day, dIdx) => {
+      week.forEach((day) => {
         if ((day.in1 && !day.out1) || (!day.in1 && day.out1) || (day.in2 && !day.out2) || (!day.in2 && day.out2)) {
           alert(`Week ${wIdx+1} - ${day.dayNameFull}: Complete both In and Out timestamps for logged shifts.`);
           hasValidationError = true;
@@ -705,8 +782,274 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('modal-success').classList.add('hidden');
   });
 
+  // HTML escape helper
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function isCanvasBlank(canvas) {
+    if (!canvas) return true;
+    const blank = document.createElement('canvas');
+    blank.width = canvas.width;
+    blank.height = canvas.height;
+    return canvas.toDataURL() === blank.toDataURL();
+  }
+
+  function syncSignatureData() {
+    Object.keys(canvases).forEach(key => {
+      const cfg = canvases[key];
+      const canvasEl = document.getElementById(cfg.id);
+      if (canvasEl && !isCanvasBlank(canvasEl)) {
+        timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+      }
+    });
+    timesheetState.signatureDates.employee = document.getElementById('date-employee').value || timesheetState.signatureDates.employee || '';
+    timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor').value || timesheetState.signatureDates.supervisor || '';
+    timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value || timesheetState.signatureDates.payroll || '';
+  }
+
+  // Multi-page PDF / Print Layout Generator
+  function buildPrintLayout() {
+    syncSignatureData();
+    const printLayout = document.getElementById('print-layout');
+    if (!printLayout) return;
+
+    const empName = document.getElementById('emp-name').value || 'Student Tutor';
+    const empId = document.getElementById('emp-id').value || 'N/A';
+    const position = document.getElementById('emp-position').value || 'Tutor';
+    const dept = document.getElementById('emp-dept').value || 'Success Center';
+    const periodStart = document.getElementById('period-start').value;
+    const periodEnd = document.getElementById('period-end').value;
+    const periodDisplay = (periodStart && periodEnd) 
+      ? `${formatDateString(periodStart)} – ${formatDateString(periodEnd)}`
+      : 'Not Specified';
+
+    // Calculate totals for all weeks
+    let weekSums = [];
+    let grandTotal = 0;
+    timesheetState.weeks.forEach(week => {
+      let wSum = 0;
+      week.forEach(day => {
+        wSum += day.hours;
+      });
+      weekSums.push(wSum);
+      grandTotal += wSum;
+    });
+
+    const employeeSig = timesheetState.signatures.employee;
+    const supervisorSig = timesheetState.signatures.supervisor;
+    const payrollSig = timesheetState.signatures.payroll;
+    const employeeSigDate = timesheetState.signatureDates.employee;
+    const supervisorSigDate = timesheetState.signatureDates.supervisor;
+    const payrollSigDate = timesheetState.signatureDates.payroll;
+
+    let html = '';
+
+    timesheetState.weeks.forEach((week, wIdx) => {
+      const weekNum = wIdx + 1;
+      const weekTotal = weekSums[wIdx] || 0;
+      const firstDayDate = week[0].date ? formatDateString(week[0].date) : '';
+      const lastDayDate = week[week.length - 1].date ? formatDateString(week[week.length - 1].date) : '';
+      const weekDateRange = (firstDayDate && lastDayDate) ? `${firstDayDate} – ${lastDayDate}` : `Week ${weekNum}`;
+
+      // Build table rows
+      let rowsHtml = '';
+      week.forEach((day, dIdx) => {
+        const formattedDate = day.date ? formatDateString(day.date) : '';
+        const in1 = day.in1 || '--';
+        const out1 = day.out1 || '--';
+        const in2 = day.in2 || '--';
+        const out2 = day.out2 || '--';
+        const hoursStr = day.hours > 0 ? day.hours.toFixed(1) : '0.0';
+        const student = escapeHtml(day.studentName || '');
+        const assignment = escapeHtml(day.assignment || '');
+        const notes = escapeHtml(day.notes || '');
+
+        let weeklyCell = '';
+        if (dIdx === 0) {
+          weeklyCell = `
+            <td rowspan="${week.length}" class="p-cell-weekly">
+              <div class="p-weekly-num">${weekTotal.toFixed(1)}</div>
+              <div class="p-weekly-unit">Hours</div>
+            </td>
+          `;
+        }
+
+        rowsHtml += `
+          <tr>
+            <td class="p-cell-date">
+              <div class="p-day-name">${day.dayName}</div>
+              <div class="p-day-date">${formattedDate}</div>
+            </td>
+            <td class="p-cell-shift">${in1}</td>
+            <td class="p-cell-shift">${out1}</td>
+            <td class="p-cell-shift">${in2}</td>
+            <td class="p-cell-shift">${out2}</td>
+            <td class="p-cell-hours">${hoursStr}</td>
+            ${weeklyCell}
+            <td class="p-cell-student">${student || '<span class="p-empty-text">--</span>'}</td>
+            <td class="p-cell-skills">${assignment || '<span class="p-empty-text">--</span>'}</td>
+            <td class="p-cell-notes">${notes || '<span class="p-empty-text">--</span>'}</td>
+          </tr>
+        `;
+      });
+
+      // Overview pill list
+      const pillsHtml = timesheetState.weeks.map((_, i) => {
+        const sum = weekSums[i] || 0;
+        const isCur = i === wIdx;
+        return `<span class="p-sum-pill ${isCur ? 'active-pill' : ''}">Wk ${i + 1}: <strong>${sum.toFixed(1)}h</strong></span>`;
+      }).join(' ');
+
+      html += `
+        <div class="print-page week-page" id="print-page-week-${weekNum}">
+          <!-- Top Institutional Header -->
+          <div class="print-header">
+            <div class="print-header-brand">
+              <img src="livingstone_seal.png" alt="Livingstone College Seal" class="print-seal-img">
+              <div>
+                <h1 class="print-institution-title">LIVINGSTONE COLLEGE</h1>
+                <h2 class="print-program-title">Student Success Center &bull; Digital Timesheet</h2>
+              </div>
+            </div>
+            <div class="print-week-badge-box">
+              <div class="print-week-title">WEEK ${weekNum} OF ${timesheetState.weeks.length}</div>
+              <div class="print-week-dates">${weekDateRange}</div>
+            </div>
+          </div>
+
+          <!-- Tutor & Period Meta Bar -->
+          <div class="print-meta-grid">
+            <div class="print-meta-item">
+              <span class="print-meta-label">Tutor Name</span>
+              <span class="print-meta-value">${escapeHtml(empName)}</span>
+            </div>
+            <div class="print-meta-item">
+              <span class="print-meta-label">Tutor ID</span>
+              <span class="print-meta-value">${escapeHtml(empId)}</span>
+            </div>
+            <div class="print-meta-item">
+              <span class="print-meta-label">Position</span>
+              <span class="print-meta-value">${escapeHtml(position)}</span>
+            </div>
+            <div class="print-meta-item">
+              <span class="print-meta-label">Department</span>
+              <span class="print-meta-value">${escapeHtml(dept)}</span>
+            </div>
+            <div class="print-meta-item print-meta-period">
+              <span class="print-meta-label">Reporting Period</span>
+              <span class="print-meta-value">${escapeHtml(periodDisplay)}</span>
+            </div>
+          </div>
+
+          <!-- Official Timesheet Table -->
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th rowspan="2" class="p-col-date">Date</th>
+                <th colspan="2" class="p-col-shift-group">Shift 1</th>
+                <th colspan="2" class="p-col-shift-group">Shift 2</th>
+                <th rowspan="2" class="p-col-hours">Daily<br>Hours</th>
+                <th rowspan="2" class="p-col-weekly">Weekly<br>Total</th>
+                <th rowspan="2" class="p-col-student">Student Name / ID</th>
+                <th rowspan="2" class="p-col-skills">Skills / Assignment(s) Worked On</th>
+                <th rowspan="2" class="p-col-notes">Progress Notes</th>
+              </tr>
+              <tr>
+                <th class="p-col-shift">In</th>
+                <th class="p-col-shift">Out</th>
+                <th class="p-col-shift">In</th>
+                <th class="p-col-shift">Out</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+
+          <!-- Week Summary & Period Grand Total Bar -->
+          <div class="print-summary-bar">
+            <div class="print-summary-weeks">
+              <span class="p-sum-label">Period Overview:</span>
+              ${pillsHtml}
+            </div>
+            <div class="print-summary-totals">
+              <div class="p-total-box">
+                <span class="p-total-label">Week ${weekNum} Total:</span>
+                <span class="p-total-val">${weekTotal.toFixed(1)} hrs</span>
+              </div>
+              <div class="p-total-box grand-total">
+                <span class="p-total-label">Total Hours This Period:</span>
+                <span class="p-total-val">${grandTotal.toFixed(1)} hrs</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 3 Signatures Row -->
+          <div class="print-signatures-grid">
+            <!-- Tutor Signature -->
+            <div class="print-sig-box">
+              <div class="print-sig-title">Tutor Signature</div>
+              <div class="print-sig-canvas-area">
+                ${employeeSig ? `<img src="${employeeSig}" class="print-sig-img" alt="Tutor Signature">` : '<div class="print-sig-line"></div>'}
+              </div>
+              <div class="print-sig-footer">
+                <span>Date Signed:</span>
+                <strong>${employeeSigDate ? formatDateString(employeeSigDate) : '________________'}</strong>
+              </div>
+            </div>
+
+            <!-- Supervisor Signature -->
+            <div class="print-sig-box">
+              <div class="print-sig-title">Supervisor Signature</div>
+              <div class="print-sig-canvas-area">
+                ${supervisorSig ? `<img src="${supervisorSig}" class="print-sig-img" alt="Supervisor Signature">` : '<div class="print-sig-line"></div>'}
+              </div>
+              <div class="print-sig-footer">
+                <span>Date Signed:</span>
+                <strong>${supervisorSigDate ? formatDateString(supervisorSigDate) : '________________'}</strong>
+              </div>
+            </div>
+
+            <!-- Payroll Signature -->
+            <div class="print-sig-box">
+              <div class="print-sig-title">Payroll Signature</div>
+              <div class="print-sig-canvas-area">
+                ${payrollSig ? `<img src="${payrollSig}" class="print-sig-img" alt="Payroll Signature">` : '<div class="print-sig-line"></div>'}
+              </div>
+              <div class="print-sig-footer">
+                <span>Date Signed:</span>
+                <strong>${payrollSigDate ? formatDateString(payrollSigDate) : '________________'}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Print Footer Notice -->
+          <div class="print-doc-footer">
+            <span>Livingstone College Student Success Center &bull; Official Digital Timesheet</span>
+            <span>Page ${weekNum} of ${timesheetState.weeks.length}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    printLayout.innerHTML = html;
+  }
+
   // Print PDF Generator
   function generateTimesheetPDF() {
+    buildPrintLayout();
     window.print();
   }
+
+  // Hook beforeprint event as well
+  window.addEventListener('beforeprint', () => {
+    buildPrintLayout();
+  });
 });

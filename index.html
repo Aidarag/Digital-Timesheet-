@@ -135,15 +135,18 @@
         <div class="tab-header">
           <div class="flex items-center gap-2 flex-wrap">
             <div id="week-tabs-container" class="flex gap-2 flex-wrap"></div>
-            <!-- Week Start Date Display -->
+            <!-- Week Date Range Display -->
             <span id="week-start-date-container" style="font-size: 11px; color: var(--text-medium); margin-left: 10px; display: inline-flex; align-items: center; gap: 4px;">
               <i data-lucide="calendar" style="width: 0.85rem; height: 0.85rem;"></i>
-              Week Start Date: <span id="week-start-date-display" style="font-weight: 700; color: var(--text-dark);">MM/DD/YYYY</span>
+              Week Dates: <span id="week-start-date-display" style="font-weight: 700; color: var(--text-dark);">MM/DD/YYYY</span>
             </span>
           </div>
           <div class="flex items-center gap-2">
             <button type="button" id="btn-add-week" class="btn-secondary" style="padding: 6px 14px; font-size: 10px;">
               <i data-lucide="plus" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Add Week
+            </button>
+            <button type="button" id="btn-remove-week" class="btn-secondary" style="padding: 6px 12px; font-size: 10px; color: #ef4444; border-color: rgba(239, 68, 68, 0.3);" title="Remove active week">
+              <i data-lucide="trash-2" style="width: 0.85rem; height: 0.85rem; display: inline;"></i> Remove Week
             </button>
           </div>
         </div>
