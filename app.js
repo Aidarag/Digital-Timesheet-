@@ -355,7 +355,7 @@ function renderDailyRows() {
     let weeklyTotalCol = '';
     if (dIdx === 0) {
       weeklyTotalCol = `
-        <td class="col-weekly" rowspan="7" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.03); border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">
+        <td class="col-weekly" rowspan="${activeWeekDays.length}" id="weekly-total-cell" style="padding: 8px; text-align: center; vertical-align: middle; background: rgba(79, 70, 229, 0.03); border-left: 1px solid #cbd5e1; border-right: 1px solid #cbd5e1;">
           <span style="font-family: var(--font-body); font-feature-settings: 'tnum'; font-size: 16px; font-weight: 800; color: var(--color-blue-vibrant); background: rgba(79, 70, 229, 0.08); padding: 6px 12px; border-radius: 8px; display: inline-block;" id="weekly-total-display-value">${weeklyTotalSum.toFixed(1)}</span>
         </td>
       `;
