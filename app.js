@@ -5,6 +5,8 @@
 // Redesigned Application State
 let timesheetState = {
   employeeName: '',
+  employeeEmail: '',
+  tutorId: '',
   periodStart: '',
   periodEnd: '',
   weeks: [], // Array of weeks, each containing 6 days (Monday to Saturday, Sundays excluded)
@@ -20,6 +22,44 @@ let timesheetState = {
   },
   isSubmitted: false
 };
+
+// Persistent Tutor Profile Storage Keys (kept across all entries & browser sessions)
+const TUTOR_STORAGE_KEYS = {
+  EMAIL: 'ssc_tutor_email',
+  NAME: 'ssc_tutor_name',
+  ID: 'ssc_tutor_id'
+};
+
+function getSavedTutorProfile() {
+  return {
+    email: localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '',
+    name: localStorage.getItem(TUTOR_STORAGE_KEYS.NAME) || '',
+    id: localStorage.getItem(TUTOR_STORAGE_KEYS.ID) || ''
+  };
+}
+
+function saveTutorEmail(email) {
+  if (!email) return;
+  const trimmed = email.trim();
+  if (trimmed) {
+    localStorage.setItem(TUTOR_STORAGE_KEYS.EMAIL, trimmed);
+    timesheetState.employeeEmail = trimmed;
+
+    // Sync input fields if present
+    const empEmailInput = document.getElementById('emp-email');
+    if (empEmailInput && empEmailInput.value !== trimmed) {
+      empEmailInput.value = trimmed;
+    }
+    const modalEmailInput = document.getElementById('modal-tutor-email');
+    if (modalEmailInput && modalEmailInput.value !== trimmed) {
+      modalEmailInput.value = trimmed;
+    }
+    const badge = document.getElementById('modal-email-status-badge');
+    if (badge) {
+      badge.style.display = 'inline-block';
+    }
+  }
+}
 
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAYS_OF_WEEK_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -132,6 +172,34 @@ function formatDateString(dateStr) {
   if (!dateStr) return 'MM/DD/YYYY';
   const [y, m, d] = dateStr.split('-');
   return `${m}/${d}/${y}`;
+}
+
+function formatDisplayDate(dateStr) {
+  if (!dateStr) return '';
+  const parts = dateStr.split('-');
+  if (parts.length === 3) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const y = parts[0];
+    const m = parseInt(parts[1], 10) - 1;
+    const d = parseInt(parts[2], 10);
+    if (!isNaN(m) && !isNaN(d) && months[m]) {
+      return `${months[m]} ${d}, ${y}`;
+    }
+  }
+  return formatDateString(dateStr);
+}
+
+function formatTime12Hour(timeStr) {
+  if (!timeStr) return '';
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  let hour = parseInt(parts[0], 10);
+  const min = parts[1];
+  if (isNaN(hour)) return timeStr;
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  hour = hour % 12;
+  if (hour === 0) hour = 12;
+  return `${hour}:${min} ${ampm}`;
 }
 
 // Date helper: autofill date inputs based on Period Start Date
@@ -529,6 +597,7 @@ function initSignatures() {
 
 function saveDraft() {
   timesheetState.employeeName = document.getElementById('emp-name').value;
+  timesheetState.employeeEmail = document.getElementById('emp-email')?.value || '';
   timesheetState.tutorId = document.getElementById('emp-id').value;
   timesheetState.periodStart = document.getElementById('period-start').value;
   timesheetState.periodEnd = document.getElementById('period-end').value;
@@ -536,6 +605,16 @@ function saveDraft() {
   timesheetState.signatureDates.employee = document.getElementById('date-employee').value;
   timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor').value;
   timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value;
+
+  if (timesheetState.employeeEmail) {
+    saveTutorEmail(timesheetState.employeeEmail);
+  }
+  if (timesheetState.employeeName) {
+    localStorage.setItem(TUTOR_STORAGE_KEYS.NAME, timesheetState.employeeName.trim());
+  }
+  if (timesheetState.tutorId) {
+    localStorage.setItem(TUTOR_STORAGE_KEYS.ID, timesheetState.tutorId.trim());
+  }
 
   localStorage.setItem('ssc_timesheet_redesign_draft', JSON.stringify(timesheetState));
   alert('Timesheet draft saved successfully to localStorage!');
@@ -574,6 +653,9 @@ function loadDraft() {
     
     // Fill metadata inputs
     document.getElementById('emp-name').value = timesheetState.employeeName || '';
+    if (document.getElementById('emp-email')) {
+      document.getElementById('emp-email').value = timesheetState.employeeEmail || localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '';
+    }
     document.getElementById('emp-id').value = timesheetState.tutorId || '';
     document.getElementById('period-start').value = timesheetState.periodStart || '';
     document.getElementById('period-end').value = timesheetState.periodEnd || '';
@@ -633,6 +715,75 @@ document.addEventListener('DOMContentLoaded', () => {
   recalculateTotals();
   initSignatures();
 
+  // Restore saved tutor profile across all entries whenever the user uses the web app
+  const savedProfile = getSavedTutorProfile();
+  if (savedProfile.email) {
+    const empEmail = document.getElementById('emp-email');
+    if (empEmail) empEmail.value = savedProfile.email;
+    const modalEmail = document.getElementById('modal-tutor-email');
+    if (modalEmail) modalEmail.value = savedProfile.email;
+    timesheetState.employeeEmail = savedProfile.email;
+    const badge = document.getElementById('modal-email-status-badge');
+    if (badge) badge.style.display = 'inline-block';
+  }
+  if (savedProfile.name) {
+    const empName = document.getElementById('emp-name');
+    if (empName && !empName.value) {
+      empName.value = savedProfile.name;
+      timesheetState.employeeName = savedProfile.name;
+    }
+  }
+  if (savedProfile.id) {
+    const empId = document.getElementById('emp-id');
+    if (empId && !empId.value) {
+      empId.value = savedProfile.id;
+      timesheetState.tutorId = savedProfile.id;
+    }
+  }
+
+  // Auto-save tutor details on input & change so they are kept for any other entry
+  const empEmailInput = document.getElementById('emp-email');
+  if (empEmailInput) {
+    empEmailInput.addEventListener('input', (e) => {
+      saveTutorEmail(e.target.value);
+    });
+    empEmailInput.addEventListener('change', (e) => {
+      saveTutorEmail(e.target.value);
+    });
+  }
+
+  const modalEmailInput = document.getElementById('modal-tutor-email');
+  if (modalEmailInput) {
+    modalEmailInput.addEventListener('input', (e) => {
+      saveTutorEmail(e.target.value);
+    });
+    modalEmailInput.addEventListener('change', (e) => {
+      saveTutorEmail(e.target.value);
+    });
+  }
+
+  const empNameInput = document.getElementById('emp-name');
+  if (empNameInput) {
+    empNameInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        localStorage.setItem(TUTOR_STORAGE_KEYS.NAME, val);
+        timesheetState.employeeName = val;
+      }
+    });
+  }
+
+  const empIdInput = document.getElementById('emp-id');
+  if (empIdInput) {
+    empIdInput.addEventListener('input', (e) => {
+      const val = e.target.value.trim();
+      if (val) {
+        localStorage.setItem(TUTOR_STORAGE_KEYS.ID, val);
+        timesheetState.tutorId = val;
+      }
+    });
+  }
+
   // Period Date Range Autofill Events
   document.getElementById('period-start').addEventListener('change', () => {
     autofillDates();
@@ -690,15 +841,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Helper to format and open Outlook mailto compose draft
   function sendTimesheetEmail() {
-    const employeeName = document.getElementById('emp-name').value || 'Tutor';
-    const tutorId = document.getElementById('emp-id').value || 'N/A';
-    const position = document.getElementById('emp-position').value || 'Tutor';
-    const department = document.getElementById('emp-dept').value || 'Academic Support Center';
+    const employeeName = document.getElementById('emp-name').value.trim() || 'Tutor';
+    let tutorEmail = (document.getElementById('modal-tutor-email')?.value || document.getElementById('emp-email')?.value || localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '').trim();
+
+    // Check & Ask for Tutor Email before sending to boss if missing
+    if (!tutorEmail) {
+      const prompted = prompt('Please enter your Tutor Email before sending this timesheet to your supervisor:');
+      if (!prompted || !prompted.trim()) {
+        alert('Tutor Email is required before sending the timesheet to your supervisor.');
+        const modalInput = document.getElementById('modal-tutor-email');
+        if (modalInput) {
+          modalInput.focus();
+          modalInput.style.borderColor = '#ef4444';
+        }
+        return;
+      }
+      tutorEmail = prompted.trim();
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tutorEmail)) {
+      alert('Please provide a valid email address (e.g. tutor@livingstone.edu).');
+      const modalInput = document.getElementById('modal-tutor-email');
+      if (modalInput) {
+        modalInput.focus();
+        modalInput.style.borderColor = '#ef4444';
+      }
+      return;
+    }
+
+    // Save and sync tutor email so it's kept for this and all other future entries
+    saveTutorEmail(tutorEmail);
+
+    const tutorId = document.getElementById('emp-id').value.trim() || 'N/A';
+    const position = document.getElementById('emp-position').value.trim() || 'Tutor';
+    const department = document.getElementById('emp-dept').value.trim() || 'Academic Support Center';
     const startPeriod = document.getElementById('period-start').value || 'N/A';
     const endPeriod = document.getElementById('period-end').value || 'N/A';
 
     // Construct Subject
-    const subject = `[Timesheet Submission] ${employeeName} - Tutor (${startPeriod} to ${endPeriod})`;
+    const subject = `[Timesheet Submission] ${employeeName} (${tutorEmail}) - Tutor (${startPeriod} to ${endPeriod})`;
 
     // Calculate totals dynamically for all weeks
     let weekTotals = [];
@@ -720,6 +901,7 @@ document.addEventListener('DOMContentLoaded', () => {
     body += `==============================================\n\n`;
     body += `TUTOR DETAILS:\n`;
     body += `- Name: ${employeeName}\n`;
+    body += `- Email: ${tutorEmail}\n`;
     body += `- Tutor ID: ${tutorId}\n`;
     body += `- Position: ${position}\n`;
     body += `- Department: ${department}\n`;
@@ -773,8 +955,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     body += `\nSubmitted on: ${new Date().toLocaleString()}\n`;
 
-    // Encode Mailto Link
-    const mailtoUrl = `mailto:bdavis1@livingstone.edu?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // Encode Mailto Link: Sent to boss bdavis1@livingstone.edu with Tutor CC'd
+    const mailtoUrl = `mailto:bdavis1@livingstone.edu?cc=${encodeURIComponent(tutorEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     
     // Trigger open default mail client
     window.location.href = mailtoUrl;
@@ -789,6 +971,34 @@ document.addEventListener('DOMContentLoaded', () => {
       alert('Required Field Missing: Please sign the Tutor Signature canvas before submitting.');
       return;
     }
+
+    // Check & Validate Tutor Email before submitting
+    let tutorEmail = (document.getElementById('emp-email')?.value || '').trim();
+    if (!tutorEmail) {
+      tutorEmail = (localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '').trim();
+      if (tutorEmail && document.getElementById('emp-email')) {
+        document.getElementById('emp-email').value = tutorEmail;
+      }
+    }
+
+    if (!tutorEmail) {
+      alert('Required Field Missing: Please enter the Tutor Email before submitting.');
+      document.getElementById('emp-email')?.focus();
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(tutorEmail)) {
+      alert('Please enter a valid email address for the tutor (e.g. tutor@livingstone.edu).');
+      document.getElementById('emp-email')?.focus();
+      return;
+    }
+
+    // Persist tutor profile immediately across all visits & sessions
+    saveTutorEmail(tutorEmail);
+    const empNameVal = document.getElementById('emp-name')?.value.trim();
+    if (empNameVal) localStorage.setItem(TUTOR_STORAGE_KEYS.NAME, empNameVal);
+    const empIdVal = document.getElementById('emp-id')?.value.trim();
+    if (empIdVal) localStorage.setItem(TUTOR_STORAGE_KEYS.ID, empIdVal);
     
     // Verify shifts hours validation checks
     let hasValidationError = false;
@@ -803,19 +1013,33 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasValidationError) return;
 
-    // Lock inputs
+    // Lock inputs (exclude modal-tutor-email so it can still be verified/edited in the modal)
     timesheetState.isSubmitted = true;
-    document.querySelectorAll('input, select, textarea, button:not(#btn-close-modal):not(#btn-send-email):not(#btn-download-pdf)').forEach(el => {
+    document.querySelectorAll('input:not(#modal-tutor-email), select, textarea, button:not(#btn-close-modal):not(#btn-send-email):not(#btn-download-pdf)').forEach(el => {
       el.disabled = true;
       el.classList.add('cursor-not-allowed');
     });
+
+    // Make sure modal-tutor-email is populated and unlocked
+    const modalEmailInput = document.getElementById('modal-tutor-email');
+    if (modalEmailInput) {
+      modalEmailInput.value = tutorEmail;
+      modalEmailInput.disabled = false;
+      modalEmailInput.classList.remove('cursor-not-allowed');
+    }
+    const badge = document.getElementById('modal-email-status-badge');
+    if (badge) badge.style.display = 'inline-block';
 
     document.getElementById('modal-success').classList.remove('hidden');
   });
 
   // Success Modal Actions
   document.getElementById('btn-send-email').addEventListener('click', () => {
-    sendTimesheetEmail();
+    // Generate the official PDF timesheet document first so tutor can save/attach it
+    generateTimesheetPDF();
+    setTimeout(() => {
+      sendTimesheetEmail();
+    }, 500);
   });
 
   document.getElementById('btn-download-pdf').addEventListener('click', () => {
@@ -858,18 +1082,19 @@ document.addEventListener('DOMContentLoaded', () => {
     timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value || timesheetState.signatureDates.payroll || '';
   }
 
-  // Multi-page PDF / Print Layout Generator
+  // Multi-page PDF / Print Layout Generator — 1:1 Visual App Mirror with All Weeks Visible
   function buildPrintLayout() {
     syncSignatureData();
     const printLayout = document.getElementById('print-layout');
     if (!printLayout) return;
 
-    const empName = document.getElementById('emp-name').value || 'Student Tutor';
-    const empId = document.getElementById('emp-id').value || 'N/A';
-    const position = document.getElementById('emp-position').value || 'Tutor';
-    const dept = document.getElementById('emp-dept').value || 'Success Center';
-    const periodStart = document.getElementById('period-start').value;
-    const periodEnd = document.getElementById('period-end').value;
+    const empName = document.getElementById('emp-name')?.value.trim() || 'Student Tutor';
+    const empEmail = document.getElementById('emp-email')?.value.trim() || localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '';
+    const empId = document.getElementById('emp-id')?.value.trim() || 'N/A';
+    const position = document.getElementById('emp-position')?.value.trim() || 'Tutor';
+    const dept = document.getElementById('emp-dept')?.value.trim() || 'Success Center';
+    const periodStart = document.getElementById('period-start')?.value || '';
+    const periodEnd = document.getElementById('period-end')?.value || '';
     const periodDisplay = (periodStart && periodEnd) 
       ? `${formatDateString(periodStart)} – ${formatDateString(periodEnd)}`
       : 'Not Specified';
@@ -880,7 +1105,7 @@ document.addEventListener('DOMContentLoaded', () => {
     timesheetState.weeks.forEach(week => {
       let wSum = 0;
       week.forEach(day => {
-        wSum += day.hours;
+        wSum += (day.hours || 0);
       });
       weekSums.push(wSum);
       grandTotal += wSum;
@@ -893,7 +1118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const supervisorSigDate = timesheetState.signatureDates.supervisor;
     const payrollSigDate = timesheetState.signatureDates.payroll;
 
-    let html = '';
+    const totalWeeks = timesheetState.weeks.length;
+    let html = '<div class="pdf-document-root">';
 
     timesheetState.weeks.forEach((week, wIdx) => {
       const weekNum = wIdx + 1;
@@ -901,16 +1127,31 @@ document.addEventListener('DOMContentLoaded', () => {
       const firstDayDate = week[0].date ? formatDateString(week[0].date) : '';
       const lastDayDate = week[week.length - 1].date ? formatDateString(week[week.length - 1].date) : '';
       const weekDateRange = (firstDayDate && lastDayDate) ? `${firstDayDate} – ${lastDayDate}` : `Week ${weekNum}`;
+      const isFirstPage = (wIdx === 0);
+      const isLastPage = (wIdx === totalWeeks - 1);
+
+      // Tab pills row showing all weeks
+      let pillsHtml = '';
+      timesheetState.weeks.forEach((_, pIdx) => {
+        const pSum = weekSums[pIdx] || 0;
+        const isActive = (pIdx === wIdx);
+        pillsHtml += `
+          <div class="pdf-tab-pill ${isActive ? 'active' : ''}">
+            <span>Week ${pIdx + 1}</span>
+            <span class="pdf-tab-pill-badge">${pSum.toFixed(1)}h</span>
+          </div>
+        `;
+      });
 
       // Build table rows
       let rowsHtml = '';
       week.forEach((day, dIdx) => {
         const formattedDate = day.date ? formatDateString(day.date) : '';
-        const in1 = day.in1 || '--';
-        const out1 = day.out1 || '--';
-        const in2 = day.in2 || '--';
-        const out2 = day.out2 || '--';
-        const hoursStr = day.hours > 0 ? day.hours.toFixed(1) : '0.0';
+        const in1Formatted = formatTime12Hour(day.in1);
+        const out1Formatted = formatTime12Hour(day.out1);
+        const in2Formatted = formatTime12Hour(day.in2);
+        const out2Formatted = formatTime12Hour(day.out2);
+        const hoursStr = (day.hours || 0).toFixed(1);
         const student = escapeHtml(day.studentName || '');
         const assignment = escapeHtml(day.assignment || '');
         const notes = escapeHtml(day.notes || '');
@@ -918,172 +1159,266 @@ document.addEventListener('DOMContentLoaded', () => {
         let weeklyCell = '';
         if (dIdx === 0) {
           weeklyCell = `
-            <td rowspan="${week.length}" class="p-cell-weekly">
-              <div class="p-weekly-num">${weekTotal.toFixed(1)}</div>
-              <div class="p-weekly-unit">Hours</div>
+            <td rowspan="${week.length}" class="pdf-weekly-total-cell">
+              <div class="pdf-weekly-badge">
+                ${weekTotal.toFixed(1)}
+              </div>
             </td>
           `;
         }
 
         rowsHtml += `
           <tr>
-            <td class="p-cell-date">
-              <div class="p-day-name">${day.dayName}</div>
-              <div class="p-day-date">${formattedDate}</div>
+            <td class="pdf-cell-date">
+              <div class="pdf-date-day">${day.dayName}</div>
+              <div class="pdf-date-val">${formattedDate}</div>
             </td>
-            <td class="p-cell-shift">${in1}</td>
-            <td class="p-cell-shift">${out1}</td>
-            <td class="p-cell-shift">${in2}</td>
-            <td class="p-cell-shift">${out2}</td>
-            <td class="p-cell-hours">${hoursStr}</td>
+            <td class="pdf-shift-cell">
+              <div class="pdf-shift-box ${!in1Formatted ? 'empty' : ''}">${in1Formatted || '&nbsp;'}</div>
+            </td>
+            <td class="pdf-shift-cell">
+              <div class="pdf-shift-box ${!out1Formatted ? 'empty' : ''}">${out1Formatted || '&nbsp;'}</div>
+            </td>
+            <td class="pdf-shift-cell">
+              <div class="pdf-shift-box ${!in2Formatted ? 'empty' : ''}">${in2Formatted || '&nbsp;'}</div>
+            </td>
+            <td class="pdf-shift-cell">
+              <div class="pdf-shift-box ${!out2Formatted ? 'empty' : ''}">${out2Formatted || '&nbsp;'}</div>
+            </td>
+            <td class="pdf-hours-cell">
+              <div class="pdf-daily-pill">${hoursStr}</div>
+            </td>
             ${weeklyCell}
-            <td class="p-cell-student">${student || '<span class="p-empty-text">--</span>'}</td>
-            <td class="p-cell-skills">${assignment || '<span class="p-empty-text">--</span>'}</td>
-            <td class="p-cell-notes">${notes || '<span class="p-empty-text">--</span>'}</td>
+            <td class="pdf-text-cell">
+              <div class="pdf-text-box ${!student ? 'placeholder' : ''}">${student || 'Enter student name or ID...'}</div>
+            </td>
+            <td class="pdf-text-cell">
+              <div class="pdf-text-box ${!assignment ? 'placeholder' : ''}">${assignment || 'Enter skills or assignments...'}</div>
+            </td>
+            <td class="pdf-text-cell">
+              <div class="pdf-text-box ${!notes ? 'placeholder' : ''}">${notes || 'Enter progress notes...'}</div>
+            </td>
           </tr>
         `;
       });
 
-      // Overview pill list
-      const pillsHtml = timesheetState.weeks.map((_, i) => {
-        const sum = weekSums[i] || 0;
-        const isCur = i === wIdx;
-        return `<span class="p-sum-pill ${isCur ? 'active-pill' : ''}">Wk ${i + 1}: <strong>${sum.toFixed(1)}h</strong></span>`;
-      }).join(' ');
-
       html += `
-        <div class="print-page week-page" id="print-page-week-${weekNum}">
-          <!-- Top Institutional Header -->
-          <div class="print-header">
-            <div class="print-header-brand">
-              <img src="livingstone_seal.png" alt="Livingstone College Seal" class="print-seal-img">
-              <div>
-                <h1 class="print-institution-title">LIVINGSTONE COLLEGE</h1>
-                <h2 class="print-program-title">Student Success Center &bull; Digital Timesheet</h2>
+        <div class="pdf-week-page" id="pdf-page-week-${weekNum}">
+          <div>
+            <!-- Top App Brand Navigation -->
+            <div class="pdf-nav-bar">
+              <div class="pdf-nav-brand">
+                <img src="logo-192.png" alt="Logo" class="pdf-nav-logo">
+                <div class="pdf-nav-text">
+                  <h1>Success Center</h1>
+                  <span>Digital Timesheet</span>
+                </div>
+              </div>
+              <div class="pdf-page-indicator">
+                WEEK ${weekNum} OF ${totalWeeks} &bull; ${escapeHtml(empName)}
               </div>
             </div>
-            <div class="print-week-badge-box">
-              <div class="print-week-title">WEEK ${weekNum} OF ${timesheetState.weeks.length}</div>
-              <div class="print-week-dates">${weekDateRange}</div>
+
+            ${isFirstPage ? `
+              <!-- Hero Section -->
+              <div class="pdf-hero-section">
+                <h2 class="pdf-hero-title">Monthly <span>Timesheet</span></h2>
+                <p class="pdf-hero-subtitle">Track and record your working hours and sessions.</p>
+              </div>
+
+              <!-- Two Glass Cards: Tutor Info + Reporting Period -->
+              <div class="pdf-cards-grid">
+                <!-- Tutor Information Card -->
+                <div class="pdf-glass-card">
+                  <div class="pdf-section-label">
+                    <i data-lucide="user"></i> Tutor Information
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                      <span class="pdf-label-mono">Tutor Name</span>
+                      <div class="pdf-input-box">${escapeHtml(empName)}</div>
+                    </div>
+                    <div>
+                      <span class="pdf-label-mono">Tutor Email</span>
+                      <div class="pdf-input-box">${escapeHtml(empEmail || 'N/A')}</div>
+                    </div>
+                    <div>
+                      <span class="pdf-label-mono">Tutor ID</span>
+                      <div class="pdf-input-box">${escapeHtml(empId)}</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                      <div>
+                        <span class="pdf-label-mono">Position</span>
+                        <div class="pdf-input-box readonly-box">${escapeHtml(position)}</div>
+                      </div>
+                      <div>
+                        <span class="pdf-label-mono">Department</span>
+                        <div class="pdf-input-box readonly-box">${escapeHtml(dept)}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Reporting Period Card -->
+                <div class="pdf-glass-card">
+                  <div class="pdf-section-label">
+                    <i data-lucide="calendar-range"></i> Reporting Period
+                  </div>
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <div>
+                      <span class="pdf-label-mono">Start Date</span>
+                      <div class="pdf-input-box">${periodStart ? formatDisplayDate(periodStart) : 'Not specified'}</div>
+                    </div>
+                    <div>
+                      <span class="pdf-label-mono">End Date</span>
+                      <div class="pdf-input-box">${periodEnd ? formatDisplayDate(periodEnd) : 'Not specified'}</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ` : `
+              <!-- Compact Meta Bar for Subsequent Pages -->
+              <div class="pdf-subpage-header">
+                <div>
+                  <span style="font-weight: 600; color: #475569;">Tutor:</span>
+                  <strong>${escapeHtml(empName)}</strong> <span style="color: #64748b;">(ID: ${escapeHtml(empId)})</span>
+                </div>
+                <div>
+                  <span style="font-weight: 600; color: #475569;">Reporting Period:</span>
+                  <strong>${periodDisplay}</strong>
+                </div>
+                <div>
+                  <span style="font-weight: 600; color: #475569;">Department:</span>
+                  <strong>${escapeHtml(dept)}</strong>
+                </div>
+              </div>
+            `}
+
+            <!-- Main Spreadsheet Card for This Week -->
+            <div class="pdf-table-card">
+              <!-- Week Tabs Header -->
+              <div class="pdf-tab-header">
+                <div class="pdf-tab-pills-row">
+                  ${pillsHtml}
+                </div>
+                <div class="pdf-week-start-date">
+                  <i data-lucide="calendar" style="width: 13px; height: 13px; color: #4f46e5;"></i>
+                  <span>Week Start Date: <strong>${weekDateRange}</strong></span>
+                </div>
+              </div>
+
+              <!-- Spreadsheet Table -->
+              <table class="pdf-table">
+                <thead>
+                  <tr>
+                    <th style="width: 7.5%;">Date</th>
+                    <th style="width: 5%;">In</th>
+                    <th style="width: 5%;">Out</th>
+                    <th style="width: 5%;">In</th>
+                    <th style="width: 5%;">Out</th>
+                    <th style="width: 6.5%;">Daily Hours</th>
+                    <th style="width: 6.8%;">Weekly Total</th>
+                    <th style="width: 18%;">Student Name / ID</th>
+                    <th style="width: 20.6%;">Skills / Assignments Worked On</th>
+                    <th style="width: 20.6%;">Progress Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+
+              <!-- Weekly Total Footer -->
+              <div class="pdf-week-footer">
+                <span class="pdf-week-footer-label">Weekly Total</span>
+                <span class="pdf-week-footer-value">${weekTotal.toFixed(1)} Hours</span>
+              </div>
             </div>
           </div>
 
-          <!-- Tutor & Period Meta Bar -->
-          <div class="print-meta-grid">
-            <div class="print-meta-item">
-              <span class="print-meta-label">Tutor Name</span>
-              <span class="print-meta-value">${escapeHtml(empName)}</span>
-            </div>
-            <div class="print-meta-item">
-              <span class="print-meta-label">Tutor ID</span>
-              <span class="print-meta-value">${escapeHtml(empId)}</span>
-            </div>
-            <div class="print-meta-item">
-              <span class="print-meta-label">Position</span>
-              <span class="print-meta-value">${escapeHtml(position)}</span>
-            </div>
-            <div class="print-meta-item">
-              <span class="print-meta-label">Department</span>
-              <span class="print-meta-value">${escapeHtml(dept)}</span>
-            </div>
-            <div class="print-meta-item print-meta-period">
-              <span class="print-meta-label">Reporting Period</span>
-              <span class="print-meta-value">${escapeHtml(periodDisplay)}</span>
-            </div>
-          </div>
+          ${isLastPage ? `
+            <!-- Bottom Row on Final Page: Total Hours + 3 Signatures -->
+            <div>
+              <div class="pdf-bottom-row">
+                <!-- Total Hours Card -->
+                <div class="pdf-total-hours-card">
+                  <div class="pdf-total-hours-icon">
+                    <i data-lucide="trending-up" style="width: 1.25rem; height: 1.25rem;"></i>
+                  </div>
+                  <div>
+                    <span class="pdf-label-mono" style="color: #4f46e5; margin-bottom: 2px;">Total Hours This Period</span>
+                    <div style="font-family: var(--font-display), sans-serif; font-size: 1.45rem; font-weight: 800; color: #0f172a; line-height: 1.1;">
+                      ${grandTotal.toFixed(1)} <span style="font-size: 0.85rem; font-weight: 600; color: #64748b;">Hours</span>
+                    </div>
+                    <div style="font-size: 10px; color: #64748b; margin-top: 2px;">Reporting: ${periodDisplay}</div>
+                  </div>
+                </div>
 
-          <!-- Official Timesheet Table -->
-          <table class="print-table">
-            <thead>
-              <tr>
-                <th rowspan="2" class="p-col-date">Date</th>
-                <th colspan="2" class="p-col-shift-group">Shift 1</th>
-                <th colspan="2" class="p-col-shift-group">Shift 2</th>
-                <th rowspan="2" class="p-col-hours">Daily<br>Hours</th>
-                <th rowspan="2" class="p-col-weekly">Weekly<br>Total</th>
-                <th rowspan="2" class="p-col-student">Student Name / ID</th>
-                <th rowspan="2" class="p-col-skills">Skills / Assignment(s) Worked On</th>
-                <th rowspan="2" class="p-col-notes">Progress Notes</th>
-              </tr>
-              <tr>
-                <th class="p-col-shift">In</th>
-                <th class="p-col-shift">Out</th>
-                <th class="p-col-shift">In</th>
-                <th class="p-col-shift">Out</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rowsHtml}
-            </tbody>
-          </table>
+                <!-- Tutor Signature Card -->
+                <div class="pdf-sig-card">
+                  <div class="pdf-section-label" style="font-size: 11.5px; margin-bottom: 4px;">
+                    <i data-lucide="edit-3"></i> Tutor Signature
+                  </div>
+                  <div class="pdf-sig-canvas-box">
+                    ${employeeSig ? `<img src="${employeeSig}" class="pdf-sig-img" alt="Tutor Signature">` : '<span style="font-size: 11px; color: #94a3b8; font-style: italic;">Sign here</span>'}
+                  </div>
+                  <div class="pdf-sig-date-row">
+                    <span class="pdf-label-mono" style="margin-bottom: 0;">Date Signed</span>
+                    <strong style="color: #0f172a;">${employeeSigDate ? formatDateString(employeeSigDate) : '________________'}</strong>
+                  </div>
+                </div>
 
-          <!-- Week Summary & Period Grand Total Bar -->
-          <div class="print-summary-bar">
-            <div class="print-summary-weeks">
-              <span class="p-sum-label">Period Overview:</span>
-              ${pillsHtml}
-            </div>
-            <div class="print-summary-totals">
-              <div class="p-total-box">
-                <span class="p-total-label">Week ${weekNum} Total:</span>
-                <span class="p-total-val">${weekTotal.toFixed(1)} hrs</span>
-              </div>
-              <div class="p-total-box grand-total">
-                <span class="p-total-label">Total Hours This Period:</span>
-                <span class="p-total-val">${grandTotal.toFixed(1)} hrs</span>
-              </div>
-            </div>
-          </div>
+                <!-- Supervisor Signature Card -->
+                <div class="pdf-sig-card">
+                  <div class="pdf-section-label" style="font-size: 11.5px; margin-bottom: 4px;">
+                    <i data-lucide="user-check"></i> Supervisor Signature
+                  </div>
+                  <div class="pdf-sig-canvas-box">
+                    ${supervisorSig ? `<img src="${supervisorSig}" class="pdf-sig-img" alt="Supervisor Signature">` : '<span style="font-size: 11px; color: #94a3b8; font-style: italic;">Sign here</span>'}
+                  </div>
+                  <div class="pdf-sig-date-row">
+                    <span class="pdf-label-mono" style="margin-bottom: 0;">Date Signed</span>
+                    <strong style="color: #0f172a;">${supervisorSigDate ? formatDateString(supervisorSigDate) : '________________'}</strong>
+                  </div>
+                </div>
 
-          <!-- 3 Signatures Row -->
-          <div class="print-signatures-grid">
-            <!-- Tutor Signature -->
-            <div class="print-sig-box">
-              <div class="print-sig-title">Tutor Signature</div>
-              <div class="print-sig-canvas-area">
-                ${employeeSig ? `<img src="${employeeSig}" class="print-sig-img" alt="Tutor Signature">` : '<div class="print-sig-line"></div>'}
+                <!-- Payroll Signature Card -->
+                <div class="pdf-sig-card">
+                  <div class="pdf-section-label" style="font-size: 11.5px; margin-bottom: 4px;">
+                    <i data-lucide="shield-check"></i> Payroll Signature
+                  </div>
+                  <div class="pdf-sig-canvas-box">
+                    ${payrollSig ? `<img src="${payrollSig}" class="pdf-sig-img" alt="Payroll Signature">` : '<span style="font-size: 11px; color: #94a3b8; font-style: italic;">Sign here</span>'}
+                  </div>
+                  <div class="pdf-sig-date-row">
+                    <span class="pdf-label-mono" style="margin-bottom: 0;">Date Signed</span>
+                    <strong style="color: #0f172a;">${payrollSigDate ? formatDateString(payrollSigDate) : '________________'}</strong>
+                  </div>
+                </div>
               </div>
-              <div class="print-sig-footer">
-                <span>Date Signed:</span>
-                <strong>${employeeSigDate ? formatDateString(employeeSigDate) : '________________'}</strong>
+
+              <!-- Footer Note -->
+              <div class="pdf-doc-footer-note">
+                <i data-lucide="lock" style="width: 11px; height: 11px;"></i>
+                <span>Your timesheet will be reviewed before final approval &bull; Livingstone College Student Success Center</span>
               </div>
             </div>
-
-            <!-- Supervisor Signature -->
-            <div class="print-sig-box">
-              <div class="print-sig-title">Supervisor Signature</div>
-              <div class="print-sig-canvas-area">
-                ${supervisorSig ? `<img src="${supervisorSig}" class="print-sig-img" alt="Supervisor Signature">` : '<div class="print-sig-line"></div>'}
-              </div>
-              <div class="print-sig-footer">
-                <span>Date Signed:</span>
-                <strong>${supervisorSigDate ? formatDateString(supervisorSigDate) : '________________'}</strong>
-              </div>
+          ` : `
+            <!-- Page Number on Intermediate Pages -->
+            <div style="font-size: 10px; color: #94a3b8; text-align: right; padding-top: 4px;">
+              Page ${weekNum} of ${totalWeeks} &bull; Livingstone College Student Success Center
             </div>
-
-            <!-- Payroll Signature -->
-            <div class="print-sig-box">
-              <div class="print-sig-title">Payroll Signature</div>
-              <div class="print-sig-canvas-area">
-                ${payrollSig ? `<img src="${payrollSig}" class="print-sig-img" alt="Payroll Signature">` : '<div class="print-sig-line"></div>'}
-              </div>
-              <div class="print-sig-footer">
-                <span>Date Signed:</span>
-                <strong>${payrollSigDate ? formatDateString(payrollSigDate) : '________________'}</strong>
-              </div>
-            </div>
-          </div>
-
-          <!-- Print Footer Notice -->
-          <div class="print-doc-footer">
-            <span>Livingstone College Student Success Center &bull; Official Digital Timesheet</span>
-            <span>Page ${weekNum} of ${timesheetState.weeks.length}</span>
-          </div>
+          `}
         </div>
       `;
     });
 
+    html += '</div>';
+
     printLayout.innerHTML = html;
+    if (window.lucide) {
+      lucide.createIcons();
+    }
   }
 
   // Print PDF Generator
@@ -1096,4 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.addEventListener('beforeprint', () => {
     buildPrintLayout();
   });
+
+  // Initial build of print layout so it is always pre-rendered in DOM
+  buildPrintLayout();
 });

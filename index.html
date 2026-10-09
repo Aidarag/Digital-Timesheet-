@@ -93,20 +93,26 @@
           </div>
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
-              <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor Name</label>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor Name <span style="color: #ef4444;">*</span></label>
               <input type="text" id="emp-name" required placeholder="Enter tutor name..." class="input-flat">
+            </div>
+            <div>
+              <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor Email <span style="color: #ef4444;">*</span></label>
+              <input type="email" id="emp-email" required placeholder="tutor@livingstone.edu" class="input-flat">
             </div>
             <div>
               <label class="label-mono" style="display: block; margin-bottom: 6px;">Tutor ID</label>
               <input type="text" id="emp-id" placeholder="XXX-XXX-XXX" class="input-flat">
             </div>
-            <div>
-              <label class="label-mono" style="display: block; margin-bottom: 6px;">Position</label>
-              <input type="text" id="emp-position" readonly value="Tutor" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
-            </div>
-            <div>
-              <label class="label-mono" style="display: block; margin-bottom: 6px;">Department</label>
-              <input type="text" id="emp-dept" readonly value="Success Center" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="label-mono" style="display: block; margin-bottom: 6px;">Position</label>
+                <input type="text" id="emp-position" readonly value="Tutor" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
+              </div>
+              <div>
+                <label class="label-mono" style="display: block; margin-bottom: 6px;">Department</label>
+                <input type="text" id="emp-dept" readonly value="Success Center" class="input-flat" style="color: var(--text-medium); cursor: default; background: rgba(248,250,252,0.6);">
+              </div>
             </div>
           </div>
         </div>
@@ -282,17 +288,35 @@
       <div style="margin-top: 1.25rem;">
         <h3 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; letter-spacing: -0.01em;">Timesheet Finalized!</h3>
         <p style="font-size: 0.875rem; color: var(--text-medium); margin-top: 0.5rem; line-height: 1.5;">
-          Your timesheet has been authorized and locked. Choose an action:
+          Your timesheet has been authorized and locked. Verify your email before submitting to your supervisor:
         </p>
       </div>
-      <div class="flex flex-col gap-3" style="margin-top: 1.25rem;">
-        <button type="button" id="btn-send-email" class="btn-primary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-          <i data-lucide="mail" style="width: 1rem; height: 1rem;"></i> Send to Boss (Outlook)
+
+      <!-- Tutor Email Input / Confirmation Box -->
+      <div style="margin-top: 1.25rem; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+          <label for="modal-tutor-email" class="label-mono" style="font-size: 11px; margin-bottom: 0;">
+            Tutor Email <span style="color: #ef4444;">*</span>
+          </label>
+          <span id="modal-email-status-badge" style="font-size: 10px; font-weight: 600; color: #16a34a; background: #dcfce7; padding: 2px 8px; border-radius: 9999px; display: none;">Saved</span>
+        </div>
+        <div style="position: relative;">
+          <input type="email" id="modal-tutor-email" placeholder="tutor@livingstone.edu" class="input-flat" style="padding-left: 36px; font-size: 13px; padding-top: 9px; padding-bottom: 9px;">
+          <i data-lucide="mail" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: #64748b;"></i>
+        </div>
+        <p style="font-size: 11px; color: #64748b; margin-top: 6px; line-height: 1.35; margin-bottom: 0;">
+          Saved automatically for all future entries. You will be CC'd on the submission to your supervisor.
+        </p>
+      </div>
+
+      <div class="flex flex-col gap-2.5" style="margin-top: 1.25rem;">
+        <button type="button" id="btn-download-pdf" class="btn-primary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 700;">
+          <i data-lucide="download" style="width: 1.1rem; height: 1.1rem;"></i> Download PDF Timesheet (All Weeks)
         </button>
-        <button type="button" id="btn-download-pdf" class="btn-secondary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-          <i data-lucide="download" style="width: 1rem; height: 1rem;"></i> Download PDF
+        <button type="button" id="btn-send-email" class="btn-secondary w-full" style="padding: 12px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600;">
+          <i data-lucide="mail" style="width: 1.1rem; height: 1.1rem; color: #4f46e5;"></i> Send to Boss (Outlook)
         </button>
-        <button type="button" id="btn-close-modal" style="padding: 10px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-body); font-weight: 600; font-size: 13px; cursor: pointer;">
+        <button type="button" id="btn-close-modal" style="padding: 8px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-body); font-weight: 600; font-size: 13px; cursor: pointer;">
           Back to Dashboard
         </button>
       </div>

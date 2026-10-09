@@ -1046,12 +1046,22 @@ textarea.table-input {
 }
 
 /* -------------------------------------------------------------
- * Print Stylesheet (Multi-Week Institutional Layout)
+ * Print Stylesheet (1:1 Visual App Mirror — All Weeks Visible)
  * ------------------------------------------------------------- */
+#print-layout {
+  display: none;
+}
+
 @media print {
   @page {
     size: letter landscape;
-    margin: 0.3in 0.35in;
+    margin: 0.25in 0.35in;
+  }
+
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    color-adjust: exact !important;
   }
 
   body {
@@ -1061,12 +1071,12 @@ textarea.table-input {
     margin: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
-    font-family: 'Urbanist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
     overflow: visible !important;
   }
   body::before { display: none !important; }
 
-  /* Hide screen app UI elements */
+  /* Hide screen-only interactive UI */
   #splash-screen, 
   .aura-blob,
   .top-nav,
@@ -1078,7 +1088,7 @@ textarea.table-input {
     display: none !important;
   }
 
-  /* Reveal dedicated print layout */
+  /* Reveal dedicated 1:1 print layout */
   #print-layout {
     display: block !important;
     width: 100% !important;
@@ -1086,424 +1096,530 @@ textarea.table-input {
     padding: 0 !important;
   }
 
-  /* Each week treated separately on its own page */
-  .print-page.week-page {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: space-between !important;
+  .pdf-document-root {
     width: 100% !important;
+    margin: 0 auto !important;
+  }
+
+  /* Each week page */
+  .pdf-week-page {
     page-break-after: always !important;
     break-after: page !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     box-sizing: border-box !important;
-    padding-bottom: 0.15in !important;
-    min-height: 96vh !important;
+    padding: 0 0 4px !important;
+    margin: 0 !important;
   }
 
-  .print-page.week-page:last-child {
+  .pdf-week-page:last-child {
     page-break-after: auto !important;
     break-after: auto !important;
   }
 
-  /* Institutional Header */
-  .print-header {
+  /* Top Navigation Bar */
+  .pdf-nav-bar {
     display: flex !important;
-    justify-content: space-between !important;
     align-items: center !important;
-    border-bottom: 2.5px solid #002060 !important;
-    padding-bottom: 5px !important;
+    justify-content: space-between !important;
+    padding: 0 0 8px 0 !important;
+    background: transparent !important;
+    border: none !important;
     margin-bottom: 6px !important;
   }
 
-  .print-header-brand {
+  .pdf-nav-brand {
     display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
+    gap: 10px !important;
   }
 
-  .print-seal-img {
-    height: 44px !important;
-    width: 44px !important;
+  .pdf-nav-logo {
+    height: 2.6rem !important;
+    width: auto !important;
     object-fit: contain !important;
+    display: block !important;
   }
 
-  .print-institution-title {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 17px !important;
-    font-weight: 900 !important;
-    letter-spacing: 0.08em !important;
+  .pdf-nav-text h1 {
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-size: 1.2rem !important;
+    font-weight: 800 !important;
     color: #002060 !important;
     margin: 0 !important;
-    line-height: 1.1 !important;
+    line-height: 1.15 !important;
   }
 
-  .print-program-title {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 11px !important;
-    font-weight: 600 !important;
-    color: #475569 !important;
-    margin: 2px 0 0 0 !important;
-  }
-
-  .print-week-badge-box {
-    text-align: right !important;
-  }
-
-  .print-week-title {
-    display: inline-block !important;
-    background: #002060 !important;
-    color: #ffffff !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 12px !important;
-    font-weight: 800 !important;
-    padding: 3px 10px !important;
-    border-radius: 4px !important;
-    letter-spacing: 0.05em !important;
-  }
-
-  .print-week-dates {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 10px !important;
+  .pdf-nav-text span {
+    font-family: var(--font-body), 'Inter', sans-serif !important;
+    font-size: 0.78rem !important;
     font-weight: 700 !important;
-    color: #334155 !important;
-    margin-top: 3px !important;
+    color: #4f46e5 !important;
   }
 
-  /* Tutor Meta Grid */
-  .print-meta-grid {
-    display: grid !important;
-    grid-template-columns: 1.4fr 1fr 1fr 1.2fr 1.8fr !important;
-    gap: 6px !important;
+  .pdf-page-indicator {
+    font-family: var(--font-mono), monospace !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
     background: #f8fafc !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
-    padding: 5px 10px !important;
-    margin-bottom: 6px !important;
+    padding: 3px 10px !important;
   }
 
-  .print-meta-item {
+  /* Subpage Meta Bar (Pages 2+) */
+  .pdf-subpage-header {
     display: flex !important;
-    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 6px 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    margin-bottom: 8px !important;
+    font-size: 11px !important;
+    color: #475569 !important;
   }
 
-  .print-meta-label {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 8px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    color: #64748b !important;
-  }
-
-  .print-meta-value {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 10.5px !important;
-    font-weight: 700 !important;
+  .pdf-subpage-header strong {
     color: #0f172a !important;
+  }
+
+  /* Hero Section */
+  .pdf-hero-section {
+    margin-bottom: 8px !important;
+  }
+
+  .pdf-hero-title {
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-size: 1.85rem !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    margin: 0 !important;
+    line-height: 1.15 !important;
+    letter-spacing: -0.02em !important;
+  }
+
+  .pdf-hero-title span {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: #4f46e5 !important;
+    color: #4f46e5 !important;
+  }
+
+  .pdf-hero-subtitle {
+    font-size: 0.85rem !important;
+    color: #64748b !important;
+    margin: 2px 0 0 0 !important;
+    font-weight: 400 !important;
+  }
+
+  /* 2 Meta Cards (Tutor Information & Reporting Period) */
+  .pdf-cards-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .pdf-glass-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    padding: 12px 14px !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03) !important;
+    box-sizing: border-box !important;
+  }
+
+  .pdf-section-label {
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-size: 0.85rem !important;
+    font-weight: 700 !important;
+    color: #002060 !important;
+    margin-bottom: 8px !important;
+  }
+
+  .pdf-section-label svg,
+  .pdf-section-label i {
+    width: 14px !important;
+    height: 14px !important;
+    color: #4f46e5 !important;
+  }
+
+  .pdf-label-mono {
+    font-family: var(--font-body), 'Inter', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    letter-spacing: -0.01em !important;
+    color: #1e293b !important;
+    margin-bottom: 4px !important;
+    display: block !important;
+  }
+
+  .pdf-input-box {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 8px !important;
+    padding: 7px 10px !important;
+    font-size: 12px !important;
+    font-weight: 500 !important;
+    color: #0f172a !important;
+    background: #ffffff !important;
+    min-height: 28px !important;
+    display: flex !important;
+    align-items: center !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
-  /* Timesheet Table */
-  .print-table {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    table-layout: fixed !important;
-    margin-bottom: 6px !important;
-  }
-
-  .print-table th,
-  .print-table td {
-    border: 1px solid #cbd5e1 !important;
-    padding: 4px 5px !important;
-    font-size: 9px !important;
-    line-height: 1.25 !important;
-    box-sizing: border-box !important;
-  }
-
-  .print-table th {
-    background: #002060 !important;
-    color: #ffffff !important;
-    font-family: 'Urbanist', sans-serif !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    font-size: 8.5px !important;
-    letter-spacing: 0.03em !important;
-    text-align: center !important;
-    vertical-align: middle !important;
-  }
-
-  .print-table th.p-col-shift-group {
-    background: #0a2d7a !important;
-    font-size: 8px !important;
-    padding: 2px 4px !important;
-  }
-
-  .print-table th.p-col-shift {
-    background: #123990 !important;
-    font-size: 7.5px !important;
-    padding: 2px 4px !important;
-  }
-
-  /* Column widths totaling 100% */
-  .p-col-date { width: 7.5% !important; }
-  .p-col-shift { width: 4.5% !important; }
-  .p-col-hours { width: 6.5% !important; }
-  .p-col-weekly { width: 7% !important; }
-  .p-col-student { width: 17% !important; }
-  .p-col-skills { width: 22% !important; }
-  .p-col-notes { width: 22% !important; }
-
-  .p-cell-date {
-    text-align: center !important;
-    vertical-align: middle !important;
+  .pdf-input-box.readonly-box {
     background: #f8fafc !important;
+    color: #475569 !important;
   }
 
-  .p-day-name {
-    font-family: 'Urbanist', sans-serif !important;
-    font-weight: 800 !important;
-    font-size: 10px !important;
-    color: #0f172a !important;
+  /* Spreadsheet Table Card */
+  .pdf-table-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    overflow: hidden !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04) !important;
+    margin-bottom: 8px !important;
   }
 
-  .p-day-date {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 8px !important;
-    color: #64748b !important;
-    margin-top: 1px !important;
-  }
-
-  .p-cell-shift {
-    text-align: center !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 9px !important;
-    color: #0f172a !important;
-    vertical-align: middle !important;
-  }
-
-  .p-cell-hours {
-    text-align: center !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-weight: 800 !important;
-    font-size: 10px !important;
-    color: #002060 !important;
-    background: #f1f5f9 !important;
-    vertical-align: middle !important;
-  }
-
-  .p-cell-weekly {
-    text-align: center !important;
-    vertical-align: middle !important;
-    background: #eef2ff !important;
-    border-left: 2px solid #6366f1 !important;
-    border-right: 2px solid #6366f1 !important;
-  }
-
-  .p-weekly-num {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 13.5px !important;
-    font-weight: 900 !important;
-    color: #1e1b4b !important;
-    line-height: 1 !important;
-  }
-
-  .p-weekly-unit {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 8px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    color: #4f46e5 !important;
-    margin-top: 2px !important;
-  }
-
-  .p-cell-student {
-    font-family: 'Urbanist', sans-serif !important;
-    font-weight: 700 !important;
-    font-size: 9px !important;
-    color: #0f172a !important;
-    vertical-align: top !important;
-    word-break: break-word !important;
-  }
-
-  .p-cell-skills,
-  .p-cell-notes {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 8.5px !important;
-    color: #334155 !important;
-    vertical-align: top !important;
-    white-space: pre-wrap !important;
-    word-break: break-word !important;
-    line-height: 1.3 !important;
-  }
-
-  .p-empty-text {
-    color: #94a3b8 !important;
-    font-weight: normal !important;
-  }
-
-  /* Summary Bar */
-  .print-summary-bar {
+  .pdf-tab-header {
     display: flex !important;
-    justify-content: space-between !important;
     align-items: center !important;
-    background: #f1f5f9 !important;
-    border: 1px solid #cbd5e1 !important;
-    border-radius: 6px !important;
-    padding: 5px 8px !important;
-    margin-bottom: 6px !important;
+    justify-content: space-between !important;
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border-bottom: 1.5px solid #cbd5e1 !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
   }
 
-  .print-summary-weeks {
+  .pdf-tab-pills-row {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
     flex-wrap: wrap !important;
   }
 
-  .p-sum-label {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 8px !important;
-    font-weight: 700 !important;
-    text-transform: uppercase !important;
-    color: #475569 !important;
-  }
-
-  .p-sum-pill {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 8.5px !important;
-    background: #ffffff !important;
+  .pdf-tab-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    padding: 4px 12px !important;
+    border-radius: 8px !important;
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    background: #f1f5f9 !important;
     border: 1px solid #cbd5e1 !important;
-    border-radius: 4px !important;
-    padding: 1.5px 5px !important;
     color: #334155 !important;
   }
 
-  .p-sum-pill.active-pill {
-    background: #002060 !important;
+  .pdf-tab-pill.active {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
     color: #ffffff !important;
-    border-color: #002060 !important;
-  }
-
-  .p-sum-pill strong {
-    font-weight: 800 !important;
-  }
-
-  .print-summary-totals {
-    display: flex !important;
-    gap: 10px !important;
-    align-items: center !important;
-  }
-
-  .p-total-box {
-    display: flex !important;
-    align-items: baseline !important;
-    gap: 4px !important;
-  }
-
-  .p-total-label {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 9px !important;
     font-weight: 700 !important;
-    color: #475569 !important;
+    border-color: transparent !important;
+    box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3) !important;
   }
 
-  .p-total-val {
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 10.5px !important;
-    font-weight: 800 !important;
-    color: #002060 !important;
+  .pdf-tab-pill-badge {
+    margin-left: 5px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    padding: 1px 6px !important;
+    border-radius: 5px !important;
+    background: rgba(79, 70, 229, 0.1) !important;
+    color: #4f46e5 !important;
   }
 
-  .p-total-box.grand-total {
-    background: #eff6ff !important;
-    border: 1px solid #bfdbfe !important;
-    padding: 2px 7px !important;
-    border-radius: 4px !important;
+  .pdf-tab-pill.active .pdf-tab-pill-badge {
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: #ffffff !important;
   }
 
-  .p-total-box.grand-total .p-total-label {
-    color: #1e40af !important;
-    font-weight: 800 !important;
-  }
-
-  .p-total-box.grand-total .p-total-val {
+  .pdf-week-start-date {
     font-size: 11px !important;
-    color: #1d4ed8 !important;
-    font-weight: 900 !important;
+    color: #475569 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
   }
 
-  /* Signatures */
-  .print-signatures-grid {
-    display: grid !important;
-    grid-template-columns: 1fr 1fr 1fr !important;
-    gap: 8px !important;
-    margin-bottom: 5px !important;
+  .pdf-week-start-date strong {
+    color: #0f172a !important;
   }
 
-  .print-sig-box {
+  /* Table Grid */
+  .pdf-table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: fixed !important;
+    margin: 0 !important;
+  }
+
+  .pdf-table thead tr {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%) !important;
+  }
+
+  .pdf-table th {
+    color: #ffffff !important;
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 10px !important;
+    letter-spacing: -0.01em !important;
+    padding: 7px 5px !important;
+    text-align: center !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+  }
+
+  .pdf-table th:last-child {
+    border-right: none !important;
+  }
+
+  .pdf-table td {
+    border-bottom: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    padding: 4px 5px !important;
+    vertical-align: middle !important;
+    background: #ffffff !important;
+    box-sizing: border-box !important;
+  }
+
+  .pdf-table tr:nth-child(even) td {
+    background: rgba(248, 250, 252, 0.8) !important;
+  }
+
+  .pdf-table td:last-child {
+    border-right: none !important;
+  }
+
+  /* Table cells */
+  .pdf-cell-date {
+    text-align: center !important;
+    background: #f8fafc !important;
+  }
+
+  .pdf-date-day {
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    color: #0f172a !important;
+  }
+
+  .pdf-date-val {
+    font-size: 9.5px !important;
+    color: #64748b !important;
+    margin-top: 1px !important;
+  }
+
+  .pdf-shift-cell {
+    padding: 3.5px !important;
+  }
+
+  .pdf-shift-box {
+    width: 100% !important;
+    box-sizing: border-box !important;
     border: 1px solid #cbd5e1 !important;
     border-radius: 6px !important;
-    padding: 5px 8px !important;
     background: #ffffff !important;
-    display: flex !important;
-    flex-direction: column !important;
-  }
-
-  .print-sig-title {
-    font-family: 'Urbanist', sans-serif !important;
-    font-size: 8.5px !important;
-    font-weight: 800 !important;
-    text-transform: uppercase !important;
-    letter-spacing: 0.05em !important;
-    color: #002060 !important;
-    margin-bottom: 2px !important;
-  }
-
-  .print-sig-canvas-area {
-    height: 44px !important;
+    padding: 5px 3px !important;
+    text-align: center !important;
+    font-size: 10px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    min-height: 25px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border-bottom: 1px dashed #94a3b8 !important;
-    margin-bottom: 3px !important;
   }
 
-  .print-sig-img {
-    max-height: 40px !important;
-    max-width: 100% !important;
-    object-fit: contain !important;
+  .pdf-shift-box.empty {
+    background: #fdfdfd !important;
+    border-color: #cbd5e1 !important;
   }
 
-  .print-sig-line {
-    width: 70% !important;
-    height: 1px !important;
-    border-bottom: 1px solid #cbd5e1 !important;
+  .pdf-hours-cell {
+    text-align: center !important;
+    padding: 3.5px !important;
   }
 
-  .print-sig-footer {
+  .pdf-daily-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(79, 70, 229, 0.08) !important;
+    color: #4338ca !important;
+    border: 1px solid rgba(79, 70, 229, 0.18) !important;
+    border-radius: 6px !important;
+    font-weight: 800 !important;
+    font-size: 11px !important;
+    padding: 3px 6px !important;
+    min-width: 32px !important;
+  }
+
+  .pdf-weekly-total-cell {
+    text-align: center !important;
+    vertical-align: middle !important;
+    background: rgba(79, 70, 229, 0.03) !important;
+    border-left: 1px solid #cbd5e1 !important;
+    border-right: 1px solid #cbd5e1 !important;
+    padding: 8px !important;
+  }
+
+  .pdf-weekly-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: rgba(79, 70, 229, 0.08) !important;
+    border: 1px solid rgba(79, 70, 229, 0.22) !important;
+    border-radius: 8px !important;
+    padding: 6px 12px !important;
+    font-family: var(--font-body), sans-serif !important;
+    font-feature-settings: 'tnum' !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #4f46e5 !important;
+  }
+
+  .pdf-text-cell {
+    padding: 3.5px !important;
+  }
+
+  .pdf-text-box {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    padding: 4px 6px !important;
+    font-size: 9.5px !important;
+    color: #0f172a !important;
+    min-height: 25px !important;
+    line-height: 1.3 !important;
+    word-break: break-word !important;
+    white-space: pre-wrap !important;
     display: flex !important;
+    align-items: center !important;
+  }
+
+  .pdf-text-box.placeholder {
+    color: #94a3b8 !important;
+    font-style: italic !important;
+  }
+
+  /* Week Footer */
+  .pdf-week-footer {
+    padding: 6px 12px !important;
+    display: flex !important;
+    align-items: center !important;
     justify-content: space-between !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 8px !important;
+    background: #f8fafc !important;
+    border-top: 1px solid #cbd5e1 !important;
+  }
+
+  .pdf-week-footer-label {
+    font-family: var(--font-display), 'Manrope', sans-serif !important;
+    font-weight: 700 !important;
+    font-size: 0.85rem !important;
     color: #475569 !important;
   }
 
-  .print-sig-footer strong {
-    color: #0f172a !important;
-    font-weight: 700 !important;
+  .pdf-week-footer-value {
+    font-weight: 800 !important;
+    font-size: 0.95rem !important;
+    color: #4f46e5 !important;
   }
 
-  /* Document Footer */
-  .print-doc-footer {
+  /* Bottom Signatures Row */
+  .pdf-bottom-row {
+    display: grid !important;
+    grid-template-columns: 1.1fr 1fr 1fr 1fr !important;
+    gap: 8px !important;
+    margin-top: 6px !important;
+    margin-bottom: 4px !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .pdf-total-hours-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 8px 10px !important;
     display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .pdf-total-hours-icon {
+    width: 2rem !important;
+    height: 2rem !important;
+    border-radius: 8px !important;
+    background: rgba(79, 70, 229, 0.1) !important;
+    color: #4f46e5 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pdf-sig-card {
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 8px 10px !important;
+    display: flex !important;
+    flex-direction: column !important;
     justify-content: space-between !important;
-    font-family: 'JetBrains Mono', monospace !important;
-    font-size: 7.5px !important;
-    color: #94a3b8 !important;
-    border-top: 1px solid #e2e8f0 !important;
-    padding-top: 3px !important;
+  }
+
+  .pdf-sig-canvas-box {
+    height: 44px !important;
+    border: 1px dashed #cbd5e1 !important;
+    border-radius: 6px !important;
+    background: #ffffff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+    overflow: hidden !important;
+  }
+
+  .pdf-sig-img {
+    max-height: 40px !important;
+    width: auto !important;
+    object-fit: contain !important;
+  }
+
+  .pdf-sig-date-row {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    font-size: 9.5px !important;
+  }
+
+  .pdf-doc-footer-note {
+    font-size: 9.5px !important;
+    color: #64748b !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 4px !important;
+    margin-top: 4px !important;
   }
 }
+
