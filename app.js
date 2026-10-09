@@ -61,6 +61,17 @@ function saveTutorEmail(email) {
   }
 }
 
+// Global HTML escape helper
+function escapeHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 const DAYS_OF_WEEK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAYS_OF_WEEK_FULL = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 let currentWeekIndex = 0;
@@ -477,6 +488,8 @@ function setupRowEvents(wIdx, dIdx) {
         // Update label
         const hoursDisp = document.getElementById(`hours-display-${wIdx}-${dIdx}`);
         if (hoursDisp) hoursDisp.innerText = day.hours.toFixed(1);
+        
+        scheduleAutoSave();
       };
 
       el.addEventListener('change', handleShiftUpdate);
@@ -489,6 +502,7 @@ function setupRowEvents(wIdx, dIdx) {
   if (studentInput) {
     studentInput.addEventListener('input', (e) => {
       day.studentName = e.target.value;
+      scheduleAutoSave();
     });
   }
 
@@ -497,6 +511,7 @@ function setupRowEvents(wIdx, dIdx) {
   if (skillsInput) {
     skillsInput.addEventListener('input', (e) => {
       day.assignment = e.target.value;
+      scheduleAutoSave();
     });
   }
 
@@ -505,6 +520,7 @@ function setupRowEvents(wIdx, dIdx) {
   if (notesInput) {
     notesInput.addEventListener('input', (e) => {
       day.notes = e.target.value;
+      scheduleAutoSave();
     });
   }
 }
@@ -523,14 +539,15 @@ function initSignatures() {
   Object.keys(canvases).forEach(key => {
     const cfg = canvases[key];
     const canvasEl = document.getElementById(cfg.id);
+    if (!canvasEl) return;
     const ctx = canvasEl.getContext('2d');
     const plEl = document.getElementById(cfg.pl);
     
     let isDrawing = false;
     
     // Scale size
-    canvasEl.width = canvasEl.parentElement.offsetWidth;
-    canvasEl.height = canvasEl.parentElement.offsetHeight;
+    canvasEl.width = canvasEl.parentElement.offsetWidth || 300;
+    canvasEl.height = canvasEl.parentElement.offsetHeight || 100;
     
     ctx.strokeStyle = cfg.color;
     ctx.lineWidth = 2.5;
@@ -539,7 +556,7 @@ function initSignatures() {
 
     canvasEl.addEventListener('mousedown', (e) => {
       isDrawing = true;
-      plEl.classList.add('hidden');
+      if (plEl) plEl.classList.add('hidden');
       ctx.beginPath();
       ctx.moveTo(e.offsetX, e.offsetY);
     });
@@ -554,6 +571,7 @@ function initSignatures() {
       if (isDrawing) {
         isDrawing = false;
         timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+        scheduleAutoSave();
       }
     });
 
@@ -561,7 +579,7 @@ function initSignatures() {
     canvasEl.addEventListener('touchstart', (e) => {
       e.preventDefault();
       isDrawing = true;
-      plEl.classList.add('hidden');
+      if (plEl) plEl.classList.add('hidden');
       const touch = e.touches[0];
       const rect = canvasEl.getBoundingClientRect();
       ctx.beginPath();
@@ -578,118 +596,547 @@ function initSignatures() {
     }, { passive: false });
 
     canvasEl.addEventListener('touchend', () => {
-      isDrawing = false;
-      timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+      if (isDrawing) {
+        isDrawing = false;
+        timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+        scheduleAutoSave();
+      }
     });
 
     // Clear Button
-    document.getElementById(cfg.btn).addEventListener('click', () => {
-      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-      plEl.classList.remove('hidden');
-      timesheetState.signatures[cfg.field] = '';
-    });
+    const clearBtn = document.getElementById(cfg.btn);
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        if (plEl) plEl.classList.remove('hidden');
+        timesheetState.signatures[cfg.field] = '';
+        scheduleAutoSave();
+      });
+    }
   });
 }
 
-// -------------------------------------------------------------
-// Save / Load Draft State via localStorage
-// -------------------------------------------------------------
-
-function saveDraft() {
-  timesheetState.employeeName = document.getElementById('emp-name').value;
-  timesheetState.employeeEmail = document.getElementById('emp-email')?.value || '';
-  timesheetState.tutorId = document.getElementById('emp-id').value;
-  timesheetState.periodStart = document.getElementById('period-start').value;
-  timesheetState.periodEnd = document.getElementById('period-end').value;
-  
-  timesheetState.signatureDates.employee = document.getElementById('date-employee').value;
-  timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor').value;
-  timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value;
-
-  if (timesheetState.employeeEmail) {
-    saveTutorEmail(timesheetState.employeeEmail);
-  }
-  if (timesheetState.employeeName) {
-    localStorage.setItem(TUTOR_STORAGE_KEYS.NAME, timesheetState.employeeName.trim());
-  }
-  if (timesheetState.tutorId) {
-    localStorage.setItem(TUTOR_STORAGE_KEYS.ID, timesheetState.tutorId.trim());
-  }
-
-  localStorage.setItem('ssc_timesheet_redesign_draft', JSON.stringify(timesheetState));
-  alert('Timesheet draft saved successfully to localStorage!');
+function isCanvasBlank(canvas) {
+  if (!canvas) return true;
+  const blank = document.createElement('canvas');
+  blank.width = canvas.width;
+  blank.height = canvas.height;
+  return canvas.toDataURL() === blank.toDataURL();
 }
 
-function loadDraft() {
-  const data = localStorage.getItem('ssc_timesheet_redesign_draft');
-  if (!data) {
-    alert('No saved draft found.');
-    return;
+function syncSignatureData() {
+  Object.keys(canvases).forEach(key => {
+    const cfg = canvases[key];
+    const canvasEl = document.getElementById(cfg.id);
+    if (canvasEl && !isCanvasBlank(canvasEl)) {
+      timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
+    }
+  });
+  timesheetState.signatureDates.employee = document.getElementById('date-employee')?.value || timesheetState.signatureDates.employee || '';
+  timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor')?.value || timesheetState.signatureDates.supervisor || '';
+  timesheetState.signatureDates.payroll = document.getElementById('date-payroll')?.value || timesheetState.signatureDates.payroll || '';
+}
+
+// -------------------------------------------------------------
+// Auto-Save, Memory & Historical Archive Management
+// -------------------------------------------------------------
+
+const STORAGE_KEYS = {
+  CURRENT_TIMESHEET: 'ssc_current_timesheet',
+  ARCHIVES: 'ssc_timesheet_archives',
+  TUTOR_EMAIL: 'ssc_tutor_email',
+  TUTOR_NAME: 'ssc_tutor_name',
+  TUTOR_ID: 'ssc_tutor_id'
+};
+
+let autoSaveDebounceTimer = null;
+
+function setAutoSaveStatus(status, text) {
+  const indicator = document.getElementById('autosave-indicator');
+  const label = document.getElementById('autosave-text');
+  if (!indicator || !label) return;
+  
+  if (status === 'saving') {
+    indicator.classList.add('saving');
+    label.innerText = text || 'Saving...';
+  } else {
+    indicator.classList.remove('saving');
+    label.innerText = text || 'All changes saved';
+  }
+}
+
+function scheduleAutoSave() {
+  setAutoSaveStatus('saving', 'Saving...');
+  clearTimeout(autoSaveDebounceTimer);
+  autoSaveDebounceTimer = setTimeout(() => {
+    executeAutoSave();
+  }, 300);
+}
+
+function getPeriodMonthLabel(dateStr) {
+  if (!dateStr) return 'Active Month';
+  const parts = dateStr.split('-');
+  if (parts.length >= 2) {
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const m = parseInt(parts[1], 10) - 1;
+    const y = parts[0];
+    if (months[m]) return `${months[m]} ${y}`;
+  }
+  return dateStr;
+}
+
+function getTimesheetArchives() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.ARCHIVES);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveTimesheetArchives(archives) {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ARCHIVES, JSON.stringify(archives));
+  } catch (e) {
+    console.warn('Error saving archives:', e);
+  }
+}
+
+function upsertTimesheetArchive(state) {
+  const archives = getTimesheetArchives();
+  const tutorKey = (state.employeeEmail || state.employeeName || 'Tutor').trim().toLowerCase();
+  const periodKey = state.periodStart || 'current';
+  const archiveKey = `${tutorKey}__${periodKey}`;
+  
+  const monthLabel = getPeriodMonthLabel(state.periodStart);
+  
+  const record = {
+    archiveKey,
+    monthLabel,
+    employeeName: state.employeeName || 'Student Tutor',
+    employeeEmail: state.employeeEmail || '',
+    tutorId: state.tutorId || '',
+    periodStart: state.periodStart || '',
+    periodEnd: state.periodEnd || '',
+    totalHours: state.totalHours || 0,
+    isSubmitted: state.isSubmitted || false,
+    lastSaved: state.lastSaved || new Date().toISOString(),
+    data: JSON.parse(JSON.stringify(state))
+  };
+  
+  const existingIdx = archives.findIndex(a => a.archiveKey === archiveKey);
+  if (existingIdx >= 0) {
+    archives[existingIdx] = record;
+  } else {
+    archives.unshift(record);
   }
   
-  try {
-    timesheetState = JSON.parse(data);
-    
-    // Migrate legacy session arrays to flat properties and ensure Sunday is omitted
-    if (timesheetState.weeks) {
-      timesheetState.weeks.forEach(week => {
-        // Strip out Sunday if present
-        const sunIdx = week.findIndex(d => d.dayName === 'Sun' || d.dayNameFull === 'Sunday');
-        if (sunIdx !== -1) {
-          week.splice(sunIdx, 1);
-        }
-        if (week.length > 6) {
-          week.length = 6;
-        }
-        week.forEach(day => {
-          if (day.sessions && day.sessions.length > 0) {
-            if (!day.studentName) day.studentName = day.sessions[0].studentName || '';
-            if (!day.assignment) day.assignment = day.sessions[0].assignment || '';
-            if (!day.notes) day.notes = day.sessions[0].notes || '';
-          }
-        });
+  if (archives.length > 40) {
+    archives.length = 40;
+  }
+  
+  saveTimesheetArchives(archives);
+}
+
+function executeAutoSave() {
+  clearTimeout(autoSaveDebounceTimer);
+  
+  timesheetState.employeeName = document.getElementById('emp-name')?.value.trim() || timesheetState.employeeName || '';
+  timesheetState.employeeEmail = (document.getElementById('modal-tutor-email')?.value || document.getElementById('emp-email')?.value || timesheetState.employeeEmail || '').trim();
+  timesheetState.tutorId = document.getElementById('emp-id')?.value.trim() || timesheetState.tutorId || '';
+  timesheetState.periodStart = document.getElementById('period-start')?.value || timesheetState.periodStart || '';
+  timesheetState.periodEnd = document.getElementById('period-end')?.value || timesheetState.periodEnd || '';
+  
+  timesheetState.signatureDates.employee = document.getElementById('date-employee')?.value || timesheetState.signatureDates.employee || '';
+  timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor')?.value || timesheetState.signatureDates.supervisor || '';
+  timesheetState.signatureDates.payroll = document.getElementById('date-payroll')?.value || timesheetState.signatureDates.payroll || '';
+  
+  syncSignatureData();
+  
+  let totalHours = 0;
+  if (timesheetState.weeks) {
+    timesheetState.weeks.forEach(week => {
+      week.forEach(day => {
+        totalHours += (day.hours || 0);
       });
-    }
+    });
+  }
+  timesheetState.totalHours = totalHours;
+  timesheetState.lastSaved = new Date().toISOString();
+  
+  try {
+    localStorage.setItem(STORAGE_KEYS.CURRENT_TIMESHEET, JSON.stringify(timesheetState));
     
-    // Fill metadata inputs
-    document.getElementById('emp-name').value = timesheetState.employeeName || '';
+    if (timesheetState.employeeEmail) saveTutorEmail(timesheetState.employeeEmail);
+    if (timesheetState.employeeName) localStorage.setItem(STORAGE_KEYS.TUTOR_NAME, timesheetState.employeeName);
+    if (timesheetState.tutorId) localStorage.setItem(STORAGE_KEYS.TUTOR_ID, timesheetState.tutorId);
+    
+    upsertTimesheetArchive(timesheetState);
+    
+    const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setAutoSaveStatus('saved', `Saved (${timeStr})`);
+  } catch (err) {
+    console.warn('Auto-save error:', err);
+    setAutoSaveStatus('saved', 'All changes saved');
+  }
+}
+
+function restoreCanvasSignatures() {
+  Object.keys(canvases).forEach(key => {
+    const cfg = canvases[key];
+    const canvasEl = document.getElementById(cfg.id);
+    const plEl = document.getElementById(cfg.pl);
+    if (!canvasEl) return;
+    
+    const sigData = timesheetState.signatures[cfg.field];
+    if (sigData) {
+      const ctx = canvasEl.getContext('2d');
+      const img = new Image();
+      img.onload = () => {
+        ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+        ctx.drawImage(img, 0, 0, canvasEl.width, canvasEl.height);
+        if (plEl) plEl.classList.add('hidden');
+      };
+      img.src = sigData;
+    }
+  });
+}
+
+function updateSubmitLockState(isLocked) {
+  timesheetState.isSubmitted = isLocked;
+  const unlockBtn = document.getElementById('btn-unlock-form');
+  
+  document.querySelectorAll('#timesheet-form input:not(#emp-position):not(#emp-dept), #timesheet-form select, #timesheet-form textarea').forEach(el => {
+    el.disabled = isLocked;
+    if (isLocked) {
+      el.classList.add('cursor-not-allowed');
+    } else {
+      el.classList.remove('cursor-not-allowed');
+    }
+  });
+  
+  if (unlockBtn) {
+    if (isLocked) {
+      unlockBtn.classList.remove('hidden');
+    } else {
+      unlockBtn.classList.add('hidden');
+    }
+  }
+}
+
+function restoreSavedTimesheet() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEYS.CURRENT_TIMESHEET);
+    if (!raw) return false;
+    
+    const saved = JSON.parse(raw);
+    if (!saved || !saved.weeks || saved.weeks.length === 0) return false;
+    
+    timesheetState = saved;
+    
+    // Clean up any Sundays from legacy saved weeks
+    timesheetState.weeks.forEach(week => {
+      const sunIdx = week.findIndex(d => d.dayName === 'Sun' || d.dayNameFull === 'Sunday');
+      if (sunIdx !== -1) week.splice(sunIdx, 1);
+      if (week.length > 6) week.length = 6;
+    });
+    
+    if (document.getElementById('emp-name')) {
+      document.getElementById('emp-name').value = timesheetState.employeeName || '';
+    }
     if (document.getElementById('emp-email')) {
-      document.getElementById('emp-email').value = timesheetState.employeeEmail || localStorage.getItem(TUTOR_STORAGE_KEYS.EMAIL) || '';
+      document.getElementById('emp-email').value = timesheetState.employeeEmail || '';
     }
-    document.getElementById('emp-id').value = timesheetState.tutorId || '';
-    document.getElementById('period-start').value = timesheetState.periodStart || '';
-    document.getElementById('period-end').value = timesheetState.periodEnd || '';
+    if (document.getElementById('modal-tutor-email')) {
+      document.getElementById('modal-tutor-email').value = timesheetState.employeeEmail || '';
+    }
+    if (document.getElementById('emp-id')) {
+      document.getElementById('emp-id').value = timesheetState.tutorId || '';
+    }
+    if (document.getElementById('period-start')) {
+      document.getElementById('period-start').value = timesheetState.periodStart || '';
+    }
+    if (document.getElementById('period-end')) {
+      document.getElementById('period-end').value = timesheetState.periodEnd || '';
+    }
     
-    document.getElementById('date-employee').value = timesheetState.signatureDates.employee || '';
-    document.getElementById('date-supervisor').value = timesheetState.signatureDates.supervisor || '';
-    document.getElementById('date-payroll').value = timesheetState.signatureDates.payroll || '';
+    if (document.getElementById('date-employee')) {
+      document.getElementById('date-employee').value = timesheetState.signatureDates.employee || '';
+    }
+    if (document.getElementById('date-supervisor')) {
+      document.getElementById('date-supervisor').value = timesheetState.signatureDates.supervisor || '';
+    }
+    if (document.getElementById('date-payroll')) {
+      document.getElementById('date-payroll').value = timesheetState.signatureDates.payroll || '';
+    }
     
     currentWeekIndex = 0;
     renderWeekTabs();
     renderDailyRows();
     recalculateTotals();
+    updateWeekStartDateField();
+    updateReportingPeriodDisplay();
     
-    // Redraw Signatures
-    Object.keys(canvases).forEach(key => {
-      const cfg = canvases[key];
-      const canvasEl = document.getElementById(cfg.id);
-      const ctx = canvasEl.getContext('2d');
-      const sigData = timesheetState.signatures[cfg.field];
-      
-      if (sigData) {
-        const img = new Image();
-        img.src = sigData;
-        img.onload = () => {
-          ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-          ctx.drawImage(img, 0, 0);
-          document.getElementById(cfg.pl).classList.add('hidden');
-        };
-      }
-    });
+    restoreCanvasSignatures();
+    updateSubmitLockState(timesheetState.isSubmitted);
     
-    alert('Timesheet draft loaded successfully!');
+    setAutoSaveStatus('saved', '✓ Restored from memory');
+    return true;
   } catch (err) {
-    alert('Error loading draft details.');
+    console.warn('Error restoring timesheet:', err);
+    return false;
+  }
+}
+
+function startNewMonth() {
+  const currentMonthLabel = getPeriodMonthLabel(timesheetState.periodStart);
+  
+  const proceed = confirm(
+    `🗓️ Start timesheet for next month?\n\n` +
+    `• Your current timesheet (${currentMonthLabel}) will be safely archived in "Saved Months".\n` +
+    `• Your Tutor Profile (Name, Email, ID) will be kept.\n` +
+    `• Shifts and notes will be cleared and new dates set for the upcoming month.`
+  );
+  if (!proceed) return;
+  
+  executeAutoSave();
+  
+  let nextStart = '';
+  let nextEnd = '';
+  
+  if (timesheetState.periodStart) {
+    const parts = timesheetState.periodStart.split('-');
+    let year = parseInt(parts[0], 10);
+    let month = parseInt(parts[1], 10);
+    month += 1;
+    if (month > 12) {
+      month = 1;
+      year += 1;
+    }
+    const firstDay = new Date(year, month - 1, 1);
+    let dayOfWeek = firstDay.getDay();
+    let diff = (dayOfWeek === 0 ? 1 : (dayOfWeek === 1 ? 0 : 8 - dayOfWeek));
+    const firstMonday = new Date(year, month - 1, 1 + diff);
+    const lastDayOfMonth = new Date(year, month, 0);
+    
+    const pad = n => String(n).padStart(2, '0');
+    nextStart = `${year}-${pad(month)}-${pad(firstMonday.getDate())}`;
+    nextEnd = `${year}-${pad(month)}-${pad(lastDayOfMonth.getDate())}`;
+  }
+  
+  timesheetState.periodStart = nextStart;
+  timesheetState.periodEnd = nextEnd;
+  timesheetState.isSubmitted = false;
+  timesheetState.signatures = { employee: '', supervisor: '', payroll: '' };
+  timesheetState.signatureDates = { employee: '', supervisor: '', payroll: '' };
+  
+  timesheetState.weeks = [];
+  for (let i = 0; i < 5; i++) {
+    timesheetState.weeks.push(createEmptyWeek());
+  }
+  currentWeekIndex = 0;
+  
+  if (document.getElementById('period-start')) document.getElementById('period-start').value = nextStart;
+  if (document.getElementById('period-end')) document.getElementById('period-end').value = nextEnd;
+  if (document.getElementById('date-employee')) document.getElementById('date-employee').value = '';
+  if (document.getElementById('date-supervisor')) document.getElementById('date-supervisor').value = '';
+  if (document.getElementById('date-payroll')) document.getElementById('date-payroll').value = '';
+  
+  Object.keys(canvases).forEach(key => {
+    const cfg = canvases[key];
+    const canvasEl = document.getElementById(cfg.id);
+    const plEl = document.getElementById(cfg.pl);
+    if (canvasEl) {
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    }
+    if (plEl) plEl.classList.remove('hidden');
+  });
+  
+  if (nextStart) autofillDates();
+  
+  updateSubmitLockState(false);
+  renderWeekTabs();
+  renderDailyRows();
+  recalculateTotals();
+  updateWeekStartDateField();
+  updateReportingPeriodDisplay();
+  
+  executeAutoSave();
+  
+  const newMonthLabel = getPeriodMonthLabel(nextStart);
+  alert(`🎉 Welcome to ${newMonthLabel}!\n\nYour timesheet is ready to edit. You can switch back to previous months anytime from "Saved Months".`);
+}
+
+function openHistoryModal() {
+  executeAutoSave();
+  
+  const container = document.getElementById('history-items-container');
+  if (!container) return;
+  
+  const archives = getTimesheetArchives();
+  if (archives.length === 0) {
+    container.innerHTML = `
+      <div style="text-align: center; padding: 2.5rem 1rem; color: #64748b; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+        <i data-lucide="inbox" style="width: 32px; height: 32px; color: #94a3b8; margin-bottom: 8px;"></i>
+        <div style="font-weight: 600; font-size: 14px; color: #334155;">No saved timesheet archives yet</div>
+        <p style="font-size: 12px; margin-top: 4px; margin-bottom: 0;">Your active timesheet is saved automatically as you type.</p>
+      </div>
+    `;
+  } else {
+    let html = '';
+    const currentTutor = (timesheetState.employeeEmail || timesheetState.employeeName || '').trim().toLowerCase();
+    const currentPeriod = timesheetState.periodStart || 'current';
+    const currentKey = `${currentTutor}__${currentPeriod}`;
+    
+    archives.forEach((item, idx) => {
+      const isCurrent = (item.archiveKey === currentKey);
+      const formattedSavedDate = new Date(item.lastSaved).toLocaleString([], {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+      const hoursNum = (item.totalHours || 0).toFixed(1);
+      
+      html += `
+        <div class="history-card ${isCurrent ? 'current' : ''}">
+          <div style="display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1;">
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <strong style="font-family: var(--font-display); font-size: 14px; color: #0f172a;">${escapeHtml(item.monthLabel)}</strong>
+              ${isCurrent ? '<span style="font-size: 10px; font-weight: 700; color: #4f46e5; background: #e0e7ff; padding: 2px 7px; border-radius: 9999px;">Current Active</span>' : ''}
+              ${item.isSubmitted ? '<span style="font-size: 10px; font-weight: 600; color: #16a34a; background: #dcfce7; padding: 2px 7px; border-radius: 9999px;">Submitted</span>' : '<span style="font-size: 10px; font-weight: 600; color: #d97706; background: #fef3c7; padding: 2px 7px; border-radius: 9999px;">Draft</span>'}
+            </div>
+            <div style="font-size: 12px; color: #475569; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <span><strong>Tutor:</strong> ${escapeHtml(item.employeeName)} ${item.employeeEmail ? `(${escapeHtml(item.employeeEmail)})` : ''}</span>
+              ${item.periodStart ? `<span>&bull; Period: ${formatDateString(item.periodStart)} – ${formatDateString(item.periodEnd)}</span>` : ''}
+            </div>
+            <div style="font-size: 11px; color: #94a3b8;">
+              Last updated: ${formattedSavedDate}
+            </div>
+          </div>
+          
+          <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+            <div class="history-badge-hours">${hoursNum} hrs</div>
+            <button type="button" class="btn-primary btn-load-archive" data-index="${idx}" style="padding: 6px 12px; font-size: 12px;">
+              ${isCurrent ? 'Viewing' : 'Load & Edit'}
+            </button>
+            <button type="button" class="btn-secondary btn-delete-archive" data-index="${idx}" style="padding: 6px 10px; font-size: 12px; color: #ef4444;" title="Delete this saved timesheet">
+              <i data-lucide="trash-2" style="width: 13px; height: 13px;"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }
+  
+  if (window.lucide) lucide.createIcons();
+  document.getElementById('modal-history').classList.remove('hidden');
+  
+  container.querySelectorAll('.btn-load-archive').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+      loadArchiveByIndex(idx);
+    });
+  });
+  
+  container.querySelectorAll('.btn-delete-archive').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.currentTarget.getAttribute('data-index'), 10);
+      deleteArchiveByIndex(idx);
+    });
+  });
+}
+
+function loadArchiveByIndex(idx) {
+  const archives = getTimesheetArchives();
+  const selected = archives[idx];
+  if (!selected || !selected.data) return;
+  
+  timesheetState = JSON.parse(JSON.stringify(selected.data));
+  localStorage.setItem(STORAGE_KEYS.CURRENT_TIMESHEET, JSON.stringify(timesheetState));
+  
+  restoreSavedTimesheet();
+  document.getElementById('modal-history').classList.add('hidden');
+  alert(`✓ Loaded timesheet for ${selected.monthLabel} (${selected.employeeName}). You can edit it now.`);
+}
+
+function deleteArchiveByIndex(idx) {
+  const archives = getTimesheetArchives();
+  const selected = archives[idx];
+  if (!selected) return;
+  
+  if (!confirm(`Are you sure you want to delete the saved timesheet for ${selected.monthLabel} (${selected.employeeName})?`)) {
+    return;
+  }
+  
+  archives.splice(idx, 1);
+  saveTimesheetArchives(archives);
+  openHistoryModal();
+}
+
+function startNewTutor() {
+  const proceed = confirm(
+    '👤 Start a fresh timesheet for a new tutor?\n\n' +
+    '• Current timesheets are safely saved in "Saved Months".\n' +
+    '• The form will be cleared for the new tutor to enter their details and hours.'
+  );
+  if (!proceed) return;
+  
+  executeAutoSave();
+  
+  timesheetState = {
+    employeeName: '',
+    employeeEmail: '',
+    tutorId: '',
+    periodStart: '',
+    periodEnd: '',
+    weeks: [],
+    signatures: { employee: '', supervisor: '', payroll: '' },
+    signatureDates: { employee: '', supervisor: '', payroll: '' },
+    isSubmitted: false
+  };
+  
+  if (document.getElementById('emp-name')) document.getElementById('emp-name').value = '';
+  if (document.getElementById('emp-email')) document.getElementById('emp-email').value = '';
+  if (document.getElementById('emp-id')) document.getElementById('emp-id').value = '';
+  if (document.getElementById('period-start')) document.getElementById('period-start').value = '';
+  if (document.getElementById('period-end')) document.getElementById('period-end').value = '';
+  if (document.getElementById('date-employee')) document.getElementById('date-employee').value = '';
+  if (document.getElementById('date-supervisor')) document.getElementById('date-supervisor').value = '';
+  if (document.getElementById('date-payroll')) document.getElementById('date-payroll').value = '';
+  
+  Object.keys(canvases).forEach(key => {
+    const cfg = canvases[key];
+    const canvasEl = document.getElementById(cfg.id);
+    const plEl = document.getElementById(cfg.pl);
+    if (canvasEl) {
+      const ctx = canvasEl.getContext('2d');
+      ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    }
+    if (plEl) plEl.classList.remove('hidden');
+  });
+  
+  updateSubmitLockState(false);
+  initDefaultWeeks();
+  renderWeekTabs();
+  renderDailyRows();
+  recalculateTotals();
+  
+  executeAutoSave();
+  
+  document.getElementById('modal-history')?.classList.add('hidden');
+  document.getElementById('emp-name')?.focus();
+}
+
+function saveDraft() {
+  executeAutoSave();
+  alert('Timesheet snapshot saved to memory! All changes are continuously auto-saved.');
+}
+
+function loadDraft() {
+  if (restoreSavedTimesheet()) {
+    alert('Timesheet restored from memory!');
+  } else {
+    alert('No saved timesheet found in memory.');
   }
 }
 
@@ -709,46 +1156,53 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 1800);
   }
 
-  initDefaultWeeks();
-  renderWeekTabs();
-  renderDailyRows();
-  recalculateTotals();
   initSignatures();
 
-  // Restore saved tutor profile across all entries whenever the user uses the web app
-  const savedProfile = getSavedTutorProfile();
-  if (savedProfile.email) {
-    const empEmail = document.getElementById('emp-email');
-    if (empEmail) empEmail.value = savedProfile.email;
-    const modalEmail = document.getElementById('modal-tutor-email');
-    if (modalEmail) modalEmail.value = savedProfile.email;
-    timesheetState.employeeEmail = savedProfile.email;
-    const badge = document.getElementById('modal-email-status-badge');
-    if (badge) badge.style.display = 'inline-block';
-  }
-  if (savedProfile.name) {
-    const empName = document.getElementById('emp-name');
-    if (empName && !empName.value) {
-      empName.value = savedProfile.name;
-      timesheetState.employeeName = savedProfile.name;
+  // Restore saved timesheet from memory (persists table inputs, shifts, notes, profile across all sessions)
+  const isRestored = restoreSavedTimesheet();
+  if (!isRestored) {
+    initDefaultWeeks();
+    renderWeekTabs();
+    renderDailyRows();
+    recalculateTotals();
+
+    // Restore saved tutor profile across all entries whenever the user uses the web app
+    const savedProfile = getSavedTutorProfile();
+    if (savedProfile.email) {
+      const empEmail = document.getElementById('emp-email');
+      if (empEmail) empEmail.value = savedProfile.email;
+      const modalEmail = document.getElementById('modal-tutor-email');
+      if (modalEmail) modalEmail.value = savedProfile.email;
+      timesheetState.employeeEmail = savedProfile.email;
+      const badge = document.getElementById('modal-email-status-badge');
+      if (badge) badge.style.display = 'inline-block';
     }
-  }
-  if (savedProfile.id) {
-    const empId = document.getElementById('emp-id');
-    if (empId && !empId.value) {
-      empId.value = savedProfile.id;
-      timesheetState.tutorId = savedProfile.id;
+    if (savedProfile.name) {
+      const empName = document.getElementById('emp-name');
+      if (empName && !empName.value) {
+        empName.value = savedProfile.name;
+        timesheetState.employeeName = savedProfile.name;
+      }
+    }
+    if (savedProfile.id) {
+      const empId = document.getElementById('emp-id');
+      if (empId && !empId.value) {
+        empId.value = savedProfile.id;
+        timesheetState.tutorId = savedProfile.id;
+      }
     }
   }
 
-  // Auto-save tutor details on input & change so they are kept for any other entry
+  // Auto-save tutor details on input & change so they are kept for memory and all entries
   const empEmailInput = document.getElementById('emp-email');
   if (empEmailInput) {
     empEmailInput.addEventListener('input', (e) => {
       saveTutorEmail(e.target.value);
+      scheduleAutoSave();
     });
     empEmailInput.addEventListener('change', (e) => {
       saveTutorEmail(e.target.value);
+      executeAutoSave();
     });
   }
 
@@ -756,9 +1210,11 @@ document.addEventListener('DOMContentLoaded', () => {
   if (modalEmailInput) {
     modalEmailInput.addEventListener('input', (e) => {
       saveTutorEmail(e.target.value);
+      scheduleAutoSave();
     });
     modalEmailInput.addEventListener('change', (e) => {
       saveTutorEmail(e.target.value);
+      executeAutoSave();
     });
   }
 
@@ -766,34 +1222,41 @@ document.addEventListener('DOMContentLoaded', () => {
   if (empNameInput) {
     empNameInput.addEventListener('input', (e) => {
       const val = e.target.value.trim();
-      if (val) {
-        localStorage.setItem(TUTOR_STORAGE_KEYS.NAME, val);
-        timesheetState.employeeName = val;
-      }
+      timesheetState.employeeName = val;
+      scheduleAutoSave();
     });
+    empNameInput.addEventListener('change', () => executeAutoSave());
   }
 
   const empIdInput = document.getElementById('emp-id');
   if (empIdInput) {
     empIdInput.addEventListener('input', (e) => {
       const val = e.target.value.trim();
-      if (val) {
-        localStorage.setItem(TUTOR_STORAGE_KEYS.ID, val);
-        timesheetState.tutorId = val;
-      }
+      timesheetState.tutorId = val;
+      scheduleAutoSave();
     });
+    empIdInput.addEventListener('change', () => executeAutoSave());
   }
 
   // Period Date Range Autofill Events
-  document.getElementById('period-start').addEventListener('change', () => {
+  document.getElementById('period-start')?.addEventListener('change', () => {
     autofillDates();
+    executeAutoSave();
   });
-  document.getElementById('period-end').addEventListener('change', () => {
+  document.getElementById('period-end')?.addEventListener('change', () => {
     updateReportingPeriodDisplay();
+    executeAutoSave();
+  });
+
+  // Date Signed Events
+  ['date-employee', 'date-supervisor', 'date-payroll'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => {
+      executeAutoSave();
+    });
   });
 
   // Add Week tab click
-  document.getElementById('btn-add-week').addEventListener('click', () => {
+  document.getElementById('btn-add-week')?.addEventListener('click', () => {
     timesheetState.weeks.push(createEmptyWeek());
     currentWeekIndex = timesheetState.weeks.length - 1;
     autofillDates();
@@ -801,6 +1264,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDailyRows();
     recalculateTotals();
     updateWeekStartDateField();
+    scheduleAutoSave();
   });
 
   // Remove Week click
@@ -823,8 +1287,37 @@ document.addEventListener('DOMContentLoaded', () => {
       renderDailyRows();
       recalculateTotals();
       updateWeekStartDateField();
+      scheduleAutoSave();
     });
   }
+
+  // New Month buttons (Header, Footer, and Modal)
+  ['btn-new-month', 'btn-new-month-footer', 'btn-modal-new-month'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => {
+      startNewMonth();
+    });
+  });
+
+  // History / Saved Months Modal buttons
+  document.getElementById('btn-history-modal')?.addEventListener('click', () => {
+    openHistoryModal();
+  });
+  document.getElementById('btn-close-history')?.addEventListener('click', () => {
+    document.getElementById('modal-history')?.classList.add('hidden');
+  });
+  document.getElementById('btn-close-history-footer')?.addEventListener('click', () => {
+    document.getElementById('modal-history')?.classList.add('hidden');
+  });
+  document.getElementById('btn-modal-new-tutor')?.addEventListener('click', () => {
+    startNewTutor();
+  });
+
+  // Unlock / Edit Timesheet button
+  document.getElementById('btn-unlock-form')?.addEventListener('click', () => {
+    updateSubmitLockState(false);
+    executeAutoSave();
+    alert('Timesheet unlocked! You can now edit any hours, dates, or notes.');
+  });
 
   // Footer Download PDF button
   const pdfFooterBtn = document.getElementById('btn-download-pdf-footer');
@@ -834,9 +1327,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Draft triggers
-  document.getElementById('btn-save-draft').addEventListener('click', () => {
+  // Draft / Snapshot button
+  document.getElementById('btn-save-draft')?.addEventListener('click', () => {
     saveDraft();
+  });
+
+  // Ensure auto-save runs before page unload or when tab hides
+  window.addEventListener('beforeunload', () => {
+    executeAutoSave();
+  });
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      executeAutoSave();
+    }
   });
 
   // Helper to format and open Outlook mailto compose draft
@@ -1013,12 +1516,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (hasValidationError) return;
 
-    // Lock inputs (exclude modal-tutor-email so it can still be verified/edited in the modal)
-    timesheetState.isSubmitted = true;
-    document.querySelectorAll('input:not(#modal-tutor-email), select, textarea, button:not(#btn-close-modal):not(#btn-send-email):not(#btn-download-pdf)').forEach(el => {
-      el.disabled = true;
-      el.classList.add('cursor-not-allowed');
-    });
+    // Lock inputs and save submitted state
+    updateSubmitLockState(true);
+    executeAutoSave();
 
     // Make sure modal-tutor-email is populated and unlocked
     const modalEmailInput = document.getElementById('modal-tutor-email');
@@ -1049,38 +1549,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-close-modal').addEventListener('click', () => {
     document.getElementById('modal-success').classList.add('hidden');
   });
-
-  // HTML escape helper
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
-  function isCanvasBlank(canvas) {
-    if (!canvas) return true;
-    const blank = document.createElement('canvas');
-    blank.width = canvas.width;
-    blank.height = canvas.height;
-    return canvas.toDataURL() === blank.toDataURL();
-  }
-
-  function syncSignatureData() {
-    Object.keys(canvases).forEach(key => {
-      const cfg = canvases[key];
-      const canvasEl = document.getElementById(cfg.id);
-      if (canvasEl && !isCanvasBlank(canvasEl)) {
-        timesheetState.signatures[cfg.field] = canvasEl.toDataURL();
-      }
-    });
-    timesheetState.signatureDates.employee = document.getElementById('date-employee').value || timesheetState.signatureDates.employee || '';
-    timesheetState.signatureDates.supervisor = document.getElementById('date-supervisor').value || timesheetState.signatureDates.supervisor || '';
-    timesheetState.signatureDates.payroll = document.getElementById('date-payroll').value || timesheetState.signatureDates.payroll || '';
-  }
 
   // Multi-page PDF / Print Layout Generator — 1:1 Visual App Mirror with All Weeks Visible
   function buildPrintLayout() {

@@ -294,6 +294,87 @@ body {
   font-size: 0.75rem;
 }
 
+/* Auto-save status pill */
+.autosave-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: 9999px;
+  padding: 6px 13px;
+  font-family: var(--font-body);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: #475569;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.25s ease;
+  user-select: none;
+}
+
+.autosave-pill.saving {
+  color: #4f46e5;
+  border-color: rgba(79, 70, 229, 0.35);
+  background: rgba(238, 242, 255, 0.85);
+}
+
+.autosave-dot {
+  width: 7.5px;
+  height: 7.5px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  transition: all 0.25s ease;
+  flex-shrink: 0;
+}
+
+.autosave-pill.saving .autosave-dot {
+  background: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+  animation: pulse-dot 0.8s infinite alternate ease-in-out;
+}
+
+@keyframes pulse-dot {
+  from { opacity: 0.6; transform: scale(0.85); }
+  to { opacity: 1; transform: scale(1.25); }
+}
+
+/* History Card */
+.history-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.history-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.history-card.current {
+  border-color: #818cf8;
+  background: #f8faff;
+}
+
+.history-badge-hours {
+  font-family: var(--font-body);
+  font-feature-settings: 'tnum';
+  font-weight: 800;
+  font-size: 13px;
+  color: #4f46e5;
+  background: rgba(79, 70, 229, 0.08);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  white-space: nowrap;
+}
+
 /* -------------------------------------------------------------
  * Hero Title Section
  * ------------------------------------------------------------- */

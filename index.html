@@ -69,6 +69,18 @@
         <span>Digital Timesheet</span>
       </div>
     </div>
+    <div class="nav-right" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <div id="autosave-indicator" class="autosave-pill" title="Every change in your table is automatically saved to memory">
+        <span class="autosave-dot"></span>
+        <span id="autosave-text">All changes saved</span>
+      </div>
+      <button type="button" id="btn-history-modal" class="btn-secondary" style="padding: 7px 13px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;" title="View all saved timesheets and memories">
+        <i data-lucide="history" style="width: 14px; height: 14px;"></i> Saved Months
+      </button>
+      <button type="button" id="btn-new-month" class="btn-secondary" style="padding: 7px 13px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px; color: var(--color-blue-vibrant); border-color: rgba(79, 70, 229, 0.35);" title="Archive current month and start fresh for next month">
+        <i data-lucide="calendar-plus" style="width: 14px; height: 14px;"></i> New Month
+      </button>
+    </div>
   </nav>
   <span id="reporting-period-display" class="hidden"></span>
 
@@ -261,7 +273,13 @@
       <!-- 06 — FOOTER ACTION BUTTONS -->
       <div class="footer-actions">
         <button type="button" id="btn-save-draft" class="btn-secondary">
-          <i data-lucide="save" style="width: 1rem; height: 1rem;"></i> Save Draft
+          <i data-lucide="save" style="width: 1rem; height: 1rem;"></i> Save Snapshot
+        </button>
+        <button type="button" id="btn-new-month-footer" class="btn-secondary" style="color: var(--color-blue-vibrant); border-color: rgba(79, 70, 229, 0.35);">
+          <i data-lucide="calendar-plus" style="width: 1rem; height: 1rem;"></i> New Month
+        </button>
+        <button type="button" id="btn-unlock-form" class="btn-secondary hidden" style="color: #4f46e5; border-color: #4f46e5;">
+          <i data-lucide="unlock" style="width: 1rem; height: 1rem;"></i> Edit / Unlock
         </button>
         <button type="button" id="btn-download-pdf-footer" class="btn-secondary">
           <i data-lucide="download" style="width: 1rem; height: 1rem;"></i> Download PDF
@@ -318,6 +336,46 @@
         </button>
         <button type="button" id="btn-close-modal" style="padding: 8px; background: transparent; border: none; color: var(--text-light); font-family: var(--font-body); font-weight: 600; font-size: 13px; cursor: pointer;">
           Back to Dashboard
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SAVED MONTHS / HISTORY MODAL -->
+  <div id="modal-history" class="modal-overlay hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 680px; text-align: left; padding: 1.75rem;">
+      <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.25rem;">
+        <div>
+          <h3 style="font-family: var(--font-display); font-size: 1.35rem; font-weight: 800; color: var(--text-dark); margin: 0; display: flex; align-items: center; gap: 8px;">
+            <i data-lucide="history" style="color: var(--color-blue-vibrant); width: 22px; height: 22px;"></i>
+            Saved Timesheets & Memories
+          </h3>
+          <p style="font-size: 0.85rem; color: var(--text-medium); margin-top: 4px; margin-bottom: 0;">
+            Every entry is saved automatically. Review, edit past months, or prepare for next month.
+          </p>
+        </div>
+        <button type="button" id="btn-close-history" style="background: none; border: none; font-size: 1.5rem; color: #94a3b8; cursor: pointer; line-height: 1; padding: 4px;">&times;</button>
+      </div>
+
+      <!-- Quick Actions Bar inside modal -->
+      <div style="display: flex; gap: 8px; margin-bottom: 1rem; flex-wrap: wrap;">
+        <button type="button" id="btn-modal-new-month" class="btn-primary" style="padding: 7px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="calendar-plus" style="width: 14px; height: 14px;"></i> Start New Month
+        </button>
+        <button type="button" id="btn-modal-new-tutor" class="btn-secondary" style="padding: 7px 14px; font-size: 12px; display: inline-flex; align-items: center; gap: 6px;">
+          <i data-lucide="user-plus" style="width: 14px; height: 14px;"></i> Switch / New Tutor
+        </button>
+      </div>
+
+      <!-- Saved Timesheets List -->
+      <div id="history-items-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 4px;">
+        <!-- Populated dynamically via JS -->
+      </div>
+
+      <div style="margin-top: 1.25rem; display: flex; justify-content: flex-end;">
+        <button type="button" id="btn-close-history-footer" class="btn-secondary" style="padding: 8px 16px; font-size: 13px;">
+          Close
         </button>
       </div>
     </div>
